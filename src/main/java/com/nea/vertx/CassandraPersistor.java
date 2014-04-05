@@ -59,25 +59,33 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		//
 		Cluster.Builder builder = Cluster.builder();
-		for(int i = this.hosts.size() - 1; i >= 0; --i) {
-			builder.addContactPoint((String) this.hosts.get(i));
-		}
-		setCluster(builder.build());
-
-		//
-		Metadata metadata = this.cluster.getMetadata();
-		LOG.info("[Cassandra Persistor] Connected to cluster: " + metadata.getClusterName());
-		//
-		for(Host host : metadata.getAllHosts()) {
-			LOG.info("[Cassandra Persistor] DC: " + host.getDatacenter() + " - Host: " + host.getAddress() + " - Rack: " + host.getRack());
-		}
+		try {
+			for(int i = getHosts().size() - 1; i >= 0; --i) {
+				builder.addContactPoint((String) getHosts().get(i));
+			}
+			
+			setCluster(builder.build());
+			
+		} catch(Exception e) {
+			LOG.error("[Cassandra Persistor] Cannot add hosts " + getHosts(), e);
+			return;
+		}		
 
 		//
 		try {
+			//
+			Metadata metadata = this.cluster.getMetadata();
+			LOG.info("[Cassandra Persistor] Connected to cluster: " + metadata.getClusterName());
+			//
+			for(Host host : metadata.getAllHosts()) {
+				LOG.info("[Cassandra Persistor] DC: " + host.getDatacenter() + " - Host: " + host.getAddress() + " - Rack: " + host.getRack());
+			}
+			
 			setSession(getCluster().connect());
 
 		} catch(Exception e) {
-			sendError(null, "[Cassandra Persistor] Cannot connect/get session from Cassandra!");
+			LOG.error("[Cassandra Persistor] Cannot connect/get session from Cassandra!", e);
+			return;
 		}
 
 		//
