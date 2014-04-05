@@ -15,13 +15,9 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.querybuilder.Select;
-import com.datastax.driver.core.querybuilder.Select.Selection;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * 
@@ -30,7 +26,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 public class CassandraPersistor extends BusModBase implements Handler<Message<JsonObject>> {
 
 	/** */
-	private static Logger LOG;
+	private Logger LOG;
 
 	/** */
 	private Cluster cluster;
@@ -55,7 +51,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		super.start();
 
 		//
-		LOG = container.logger();
+		this.LOG = container.logger();
 
 		//
 		setAddress(getOptionalStringConfig("address", "nea.vertx.cassandra.persistor"));
@@ -71,21 +67,19 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		//
 		Metadata metadata = this.cluster.getMetadata();
-		LOG.info("[Cassandra Persistor] Connected to cluster: " + metadata.getClusterName() + "\n");
+		LOG.info("[Cassandra Persistor] Connected to cluster: " + metadata.getClusterName());
 		//
 		for(Host host : metadata.getAllHosts()) {
-			LOG.info("[Cassandra Persistor] Datacenter: " + host.getDatacenter() + "; Host: " + host.getAddress() + "; Rack: "
-					+ host.getRack() + "\n");
+			LOG.info("[Cassandra Persistor] DC: " + host.getDatacenter() + " - Host: " + host.getAddress() + " - Rack: " + host.getRack());
 		}
 
 		//
 		try {
-			setSession(getCluster().connect());	
-		
+			setSession(getCluster().connect());
+
 		} catch(Exception e) {
 			sendError(null, "[Cassandra Persistor] Cannot connect/get session from Cassandra!");
 		}
-		
 
 		//
 		eb.registerHandler(getAddress(), this);
@@ -108,48 +102,18 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		//
 		try {
 			switch(action) {
-			// Create KEYSPACE, TABLE, INDEX
-				case "create":
-					create(message);
-					break;
-
-				// Insert
-				case "insert":
-					create(message);
-					break;
-
-				// Select
-				case "select":
-					select(message);
-					break;
-
-				// Channel the raw statements
+			// Channel the raw statements
 				case "raw":
-					select(message);
-					break;
-
-				// Batch every command, e.g. batch.insert
-				case "batch":
-					break;
-
-				// Update
-				case "update":
-					break;
-
-				// Delete
-				case "delete":
-					break;
-
-				// Change KEYSPACE
-				case "change":
+					raw(message);
 					break;
 
 				default:
 					sendError(message, "[Cassandra Persistor] Action '" + action + "' unknown!");
 			}
-			//
+			
+		//
 		} catch(Exception e) {
-			sendError(message, "[Cassandra Persistor] " + e.getMessage(), e);
+			sendError(message, e);
 		}
 	}
 
@@ -157,47 +121,36 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * 
 	 * @param message
 	 */
-	protected void select(Message<JsonObject> message) {
+	protected void raw(Message<JsonObject> message) {
 		//
-		JsonObject selectMessage = message.body();
-		
-		//
-		Select.Builder selection = QueryBuilder.select();
+		JsonObject rawMessage = message.body();
+		String query = rawMessage.getString("statement");
 
-		// Select Fields
-		JsonArray fields = selectMessage.getArray("fields");
-		if(fields == null || fields.size() <= 0) {
-			selection = QueryBuilder.select().all();
+		//
+		ResultSet resultSet = null;
+		try {
+			resultSet = getSession().execute(query);
 			
-		} else {
-			for(int i = fields.size(); i >= 0; --i) {
-				((Selection)selection).column((String)fields.get(i));
-			}	
+		} catch(Exception e) {
+			//An error happened
+			sendError(message, e);
+			return;
 		}
 		
-		// From Table
-		Select select = selection.from(getKeyspace(), selectMessage.getString("table"));
+		//Query went through but without results
+		if(resultSet == null || resultSet.getAvailableWithoutFetching() <= 0) {
+			sendOK(message);
+		}
+		
+		//Iterate the results
+		for(Row row : resultSet) {
+			
+		}
 
-		// Where
-		String query = select.getQueryString();
-		JsonArray whereStatements = selectMessage.getArray("where");
-		if(whereStatements != null) {
-			for(int i = whereStatements.size(); i >= 0; --i) {
-				String whereStatement = whereStatements.get(i);
-				query += " " + whereStatement;
-				//
-				if(i > 0) {
-					query += " AND";
-				}
-			}	
-		}
-		
 		//
 		JsonArray retVals = new JsonArray();
 		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-		//
-		ResultSet resultSet = getSession().execute(query);
-		int counter = 0;		
+		int counter = 0;
 		//
 		for(Row row : resultSet) {
 			//
@@ -205,26 +158,26 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			//
 			ColumnDefinitions rowColumnDefinitions = row.getColumnDefinitions();
 			for(int i = 0; i < rowColumnDefinitions.size(); i++) {
-				
+
 				LOG.info(rowColumnDefinitions.getKeyspace(i));
 				LOG.info(rowColumnDefinitions.getTable(i));
-				LOG.info(rowColumnDefinitions.getName(i));				
+				LOG.info(rowColumnDefinitions.getName(i));
 				LOG.info(rowColumnDefinitions.getType(i));
 				LOG.info(rowColumnDefinitions.getType(i).asJavaClass());
 				LOG.info(rowColumnDefinitions.getType(i).getName());
 				LOG.info(rowColumnDefinitions.getType(i).isCollection());
 				LOG.info(rowColumnDefinitions.getType(i).getTypeArguments());
 				LOG.info(DataType.set(DataType.varchar()));
-				
+
 				if(row.isNull(i)) {
 					continue;
 				}
-				
+
 				Object o = rowColumnDefinitions.getType(i).deserialize(row.getBytesUnsafe(i));
-				JsonObject muh = new JsonObject();				
+				JsonObject muh = new JsonObject();
 				System.out.println("Object: " + o);
 				try {
-//					retVals.add(ow.writeValueAsString(o));
+					// retVals.add(ow.writeValueAsString(o));
 					System.out.println(ow.writeValueAsString(o));
 					retVal.putValue(rowColumnDefinitions.getName(i), ow.writeValueAsString(o).replaceAll("\"", ""));
 					JsonArray maeh = new JsonArray();
@@ -236,45 +189,44 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 				if(rowColumnDefinitions.getType(i).isCollection()) {
 					continue;
 				}
-				
-				
-				
+
 				//
 				if(rowColumnDefinitions.getType(i) == DataType.uuid()) {
 					retVal.putString(rowColumnDefinitions.getName(i), row.getUUID(i).toString());
-					
+
 				} else if(rowColumnDefinitions.getType(i) == DataType.varchar()) {
 					retVal.putString(rowColumnDefinitions.getName(i), row.getString(i));
-					
+
 				} else if(rowColumnDefinitions.getType(i) == DataType.blob()) {
 					retVal.putValue(rowColumnDefinitions.getName(i), row.getBytes(i));
-					
-				} else if(rowColumnDefinitions.getType(i).equals(DataType.set(DataType.varchar()))) {					
-					retVal.putValue(rowColumnDefinitions.getName(i), row.getSet(i, rowColumnDefinitions.getType(i).getTypeArguments().get(0).asJavaClass()));
-					
-					
+
+				} else if(rowColumnDefinitions.getType(i).equals(DataType.set(DataType.varchar()))) {
+					retVal.putValue(rowColumnDefinitions.getName(i),
+							row.getSet(i, rowColumnDefinitions.getType(i).getTypeArguments().get(0).asJavaClass()));
+
 				} else {
 					retVal.putValue(rowColumnDefinitions.getName(i), row.getBytes(i));
-				}			
+				}
 			}
 			//
-			retVals.addObject(retVal);			
+			retVals.addObject(retVal);
 		}
-		
+
 		//
 		message.reply(retVals);
 	}
-
+	
 	/**
 	 * 
 	 * @param message
+	 * @param e
 	 */
-	protected void create(Message<JsonObject> message) {
-
+	protected void sendError(Message<JsonObject> message, Exception e) {
+		sendError(message, "[Cassandra Persistor] " + e.getMessage(), e);
 	}
 
 	/**
@@ -283,6 +235,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	@Override
 	public void stop() {
 		//
+		eb.unregisterHandler(getAddress(), this);
+		
+		//
 		if(getSession() != null) {
 			getSession().close();
 		}
@@ -290,10 +245,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		//
 		if(getCluster() != null) {
 			getCluster().close();
-		}
-
-		//
-		eb.unregisterHandler(getAddress(), this);
+		}		
 
 		//
 		super.stop();

@@ -10,10 +10,8 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Versions
-Current version 0.0.0 ^^'
-
-* 0.0.1
-    * Basic read and store
+* 0.1
+    * Raw statement support
 
 ## Dependencies
 This Persistor has only been developed and tested with Cassandra 2.x/CQL3. To use it you of course have to have a Cassandra instance running and accessible through the network, where this Module is running.
@@ -124,12 +122,15 @@ Create branches into multiple sub-actions, separated via implicit parameter inte
 *Please use with care!*
 
     {
-        "action": "cassandra.persistor.raw",
+        "action": "raw",
         "statement": <cql3Statement>
     }
     
 #### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and cassandra.
+`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra. *Note: Do not forget the keyspace, even if configured, as the raw statements are not altered in any way!*
+
+#### Return
+The `raw` action returns a `JsonArray` of `JsonObject`s in the format `key:value` (if any resultset given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections!*
 
 # Personal Note
 *I don't know if this is very useful or already developed and published by others but I used it in private to test some ideas around Vert.x and Cassandra. As I was not able to find something similar to my idea I created this project. I hope this can be useful to you.* 

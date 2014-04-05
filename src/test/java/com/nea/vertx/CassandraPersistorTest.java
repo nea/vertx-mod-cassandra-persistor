@@ -45,21 +45,21 @@ public class CassandraPersistorTest extends TestVerticle {
 	 * 
 	 */
 	@Test
-	public void testSelect() {
+	public void testRawStatements() {
 		//
-		container.logger().info("testSelect()...");
+		container.logger().info("[Cassandra Persistor] Testing raw Statements...");
 
 		//
 		JsonObject select = new JsonObject();
-		select.putString("action", "select");
-		select.putString("table", "songs");
+		select.putString("action", "raw");
+		select.putString("statement", "SELECT * FROM songs");
 
 		//
 		vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
 			@Override
 			public void handle(Message<JsonArray> reply) {
 				//
-				container.logger().info("...testSelect() returned " + reply.body());
+				assertNotNull(reply);
 				
 				for(Object o : reply.body()) {
 					System.out.println("Oooo" + o);
@@ -68,6 +68,9 @@ public class CassandraPersistorTest extends TestVerticle {
 				}
 				
 				assertNotNull(reply.body());
+				
+				//
+				container.logger().info("...tested raw statements!");
 				testComplete();
 			}
 		});
