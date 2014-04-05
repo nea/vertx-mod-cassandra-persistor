@@ -1,7 +1,7 @@
 package com.nea.vertx;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.UUID;
 
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Handler;
@@ -12,15 +12,11 @@ import org.vertx.java.core.logging.Logger;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 
 /**
  * 
@@ -178,77 +174,6 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		
 		//Return the result array
 		message.reply(retVals);
-
-		//
-//		ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-//		int counter = 0;
-//		//
-//		for(Row row : resultSet) {
-//			//
-//			JsonObject retVal = new JsonObject();
-//			//
-//			ColumnDefinitions rowColumnDefinitions = row.getColumnDefinitions();
-//			for(int i = 0; i < rowColumnDefinitions.size(); i++) {
-//
-//				LOG.info(rowColumnDefinitions.getKeyspace(i));
-//				LOG.info(rowColumnDefinitions.getTable(i));
-//				LOG.info(rowColumnDefinitions.getName(i));
-//				LOG.info(rowColumnDefinitions.getType(i));
-//				LOG.info(rowColumnDefinitions.getType(i).asJavaClass());
-//				LOG.info(rowColumnDefinitions.getType(i).getName());
-//				LOG.info(rowColumnDefinitions.getType(i).isCollection());
-//				LOG.info(rowColumnDefinitions.getType(i).getTypeArguments());
-//				LOG.info(DataType.set(DataType.varchar()));
-//
-//				if(row.isNull(i)) {
-//					continue;
-//				}
-//
-//				Object o = rowColumnDefinitions.getType(i).deserialize(row.getBytesUnsafe(i));
-//				JsonObject muh = new JsonObject();
-//				System.out.println("Object: " + o);
-//				try {
-//					// retVals.add(ow.writeValueAsString(o));
-//					System.out.println(ow.writeValueAsString(o));
-//					retVal.putValue(rowColumnDefinitions.getName(i), ow.writeValueAsString(o).replaceAll("\"", ""));
-//					JsonArray maeh = new JsonArray();
-//					maeh.addString("muh");
-//					maeh.addNumber(1254);
-//					retVal.putElement("test", maeh);
-//					continue;
-//				} catch(JsonProcessingException e) {
-//					// TODO Auto-generated catch block
-//					e.printStackTrace();
-//				}
-//
-//				if(rowColumnDefinitions.getType(i).isCollection()) {
-//					continue;
-//				}
-//
-//				//
-//				if(rowColumnDefinitions.getType(i) == DataType.uuid()) {
-//					retVal.putString(rowColumnDefinitions.getName(i), row.getUUID(i).toString());
-//
-//				} else if(rowColumnDefinitions.getType(i) == DataType.varchar()) {
-//					retVal.putString(rowColumnDefinitions.getName(i), row.getString(i));
-//
-//				} else if(rowColumnDefinitions.getType(i) == DataType.blob()) {
-//					retVal.putValue(rowColumnDefinitions.getName(i), row.getBytes(i));
-//
-//				} else if(rowColumnDefinitions.getType(i).equals(DataType.set(DataType.varchar()))) {
-//					retVal.putValue(rowColumnDefinitions.getName(i),
-//							row.getSet(i, rowColumnDefinitions.getType(i).getTypeArguments().get(0).asJavaClass()));
-//
-//				} else {
-//					retVal.putValue(rowColumnDefinitions.getName(i), row.getBytes(i));
-//				}
-//			}
-//			//
-//			retVals.addObject(retVal);
-//		}
-//
-//		//
-//		message.reply(retVals);
 	}
 	
 	/**
@@ -258,13 +183,22 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * @param retVal
 	 * @return
 	 */
-	protected JsonObject addColumn(String columnName, Object columnValue, JsonObject retVal) {
+	protected JsonObject addColumn(String columnName, Object columnValue, JsonObject retVal) {		
 		//
 		if(columnValue instanceof Number) {
 			retVal.putNumber(columnName, (Number)columnValue);
 			
 		} else if(columnValue instanceof String) {
 			retVal.putString(columnName, (String)columnValue);
+			
+		} else if(columnValue instanceof Boolean) {
+			retVal.putBoolean(columnName, (Boolean)columnValue);
+		
+		} else if(columnValue instanceof UUID) {
+			retVal.putString(columnName, ((UUID)columnValue).toString());
+			
+		} else if(columnValue instanceof byte[]) {
+			retVal.putBinary(columnName, (byte[])columnValue);
 			
 		} else if(columnValue instanceof Collection<?>) {
 			//
@@ -273,6 +207,14 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			retArray = addColumnCollection((Collection<?>)columnValue, retArray);
 			//
 			retVal.putArray(columnName, retArray);
+			
+		} else {
+			//If nothing works, try to add the object directly but catch if not
+			try {
+				retVal.putValue(columnName, columnValue);	
+			} catch(Exception e) {
+				LOG.info("[Cassandra Persistor] Could not add value of column " + columnName);
+			}			
 		}
 		
 		//
@@ -295,8 +237,24 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			} else if(collectionValue instanceof String) {
 				retVal.addString((String)collectionValue);
 				
+			} else if(collectionValue instanceof Boolean) {
+				retVal.addBoolean((Boolean)collectionValue);
+			
+			} else if(collectionValue instanceof UUID) {
+				retVal.addString(((UUID)collectionValue).toString());
+				
+			} else if(collectionValue instanceof byte[]) {
+				retVal.addBinary((byte[])collectionValue);
+				
 			} else if(collectionValue instanceof Collection<?>) {
 				retVal.addArray(addColumnCollection((Collection<?>)collectionValue, new JsonArray()));
+			
+			} else {
+				//If nothing works, try to add the object directly but catch if not
+				try {
+					retVal.add(columnValue);
+				} catch(Exception e) {				
+				}	
 			}
 		}
 		

@@ -1,7 +1,8 @@
 package com.nea.vertx;
 
-import static org.vertx.testtools.VertxAssert.assertEquals;
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.vertx.testtools.VertxAssert.assertNotNull;
+import static org.vertx.testtools.VertxAssert.assertThat;
 import static org.vertx.testtools.VertxAssert.assertTrue;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
@@ -16,7 +17,7 @@ import org.vertx.testtools.TestVerticle;
 
 /**
  * 
- * @author savas-simon.ziplies
+ * @author nea@insanitydesign
  */
 public class CassandraPersistorTest extends TestVerticle {
 
@@ -47,7 +48,7 @@ public class CassandraPersistorTest extends TestVerticle {
 	@Test
 	public void testRawStatements() {
 		//
-		container.logger().info("[Cassandra Persistor] Testing raw Statements...");
+		container.logger().info("[" + getClass().getName() + "] Testing raw Statements...");
 
 		//
 		JsonObject select = new JsonObject();
@@ -60,20 +61,15 @@ public class CassandraPersistorTest extends TestVerticle {
 			public void handle(Message<JsonArray> reply) {
 				//
 				try {
+					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+					
+					//Tests
 					assertNotNull(reply);
-					
-					System.out.println(reply.body());
-					
-					for(Object o : reply.body()) {
-						System.out.println("Oooo" + o);
-						System.out.println(o instanceof JsonObject);
-						System.out.println(((JsonObject) o).getString("artist"));
-					}
-					
-					assertNotNull(reply.body());
+					assertNotNull(reply.body());					
+					assertThat(reply.body(), instanceOf(JsonArray.class));
 					
 					//
-					container.logger().info("...tested raw statements!");
+					container.logger().info("[" + getClass().getName() + "] ...tested raw statements!");
 					
 				} catch(Exception e) {					
 				}
