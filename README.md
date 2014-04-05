@@ -36,7 +36,7 @@ An exemplary configuration could look like
 ### Fields
 * `address` *optional* The main address for the module. Every module has a main address. Defaults to `nea.vertx.cassandra.persistor`
 * `hosts` *optional* A string array of host IPs the module connects to as contact points. Defaults to `127.0.0.1`
-* `keyspace` *optional* The Cassandra keyspace to use. Defaults to `vertxpersistor`. If no keyspace is defined, `vertxpersistor` will try to create itself in Cassandra.
+* `keyspace` *optional* The Cassandra keyspace to use. Defaults to `vertxpersistor`.
 
 ## Operations
 
@@ -48,10 +48,17 @@ An exemplary configuration could look like
         "statement": <cql3Statement>
     }
     
-#### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra. *Note: Do not forget the keyspace, even if configured, as the raw statements are not altered in any way!*
+An example could look like
 
-#### Return
+    {
+        "action": "raw",
+        "statement": "SELECT * FROM superkeyspace.tablewithinfos"
+    }
+    
+#### Fields
+`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra. *Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way!*
+
+#### Returns
 The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections!*
 
 # Personal Note
