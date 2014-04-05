@@ -10,6 +10,9 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Versions
+* 0.0.2
+    * Added support to configure a port
+    * Added embedded Cassandra-Unit test support
 * 0.0.1
     * Basic `raw` statement support
 
@@ -22,6 +25,7 @@ The Vert.x Cassandra Persistor takes the following configuration
     {
         "address": <address>,
         "hosts": [<hosts>],
+        "port": <port>,
         "keyspace": <keyspace>
     }
 
@@ -30,12 +34,14 @@ An exemplary configuration could look like
     {
         "address": "your.awesome.persistency",
         "hosts": ["192.168.172.33", "192.168.172.34"],
+        "port": 9142,
         "keyspace": "yourkeyspace"
     }
 
 ### Fields
 * `address` *optional* The main address for the module. Every module has a main address. Defaults to `nea.vertx.cassandra.persistor`
 * `hosts` *optional* A string array of host IPs the module connects to as contact points. Defaults to `127.0.0.1`
+* `port` *optional* The port (number) the Cassandra instances are running on. All hosts must have Cassandra running on the same port. Defaults to `9042`
 * `keyspace` *optional* The Cassandra keyspace to use. Defaults to `vertxpersistor`.
 
 ## Operations
