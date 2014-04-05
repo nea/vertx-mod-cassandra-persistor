@@ -62,7 +62,7 @@ An example could look like
 The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections!*
 
 ## General Responses
-In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. I looks like
+In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. It looks like
 
     {
         "status": "ok"
