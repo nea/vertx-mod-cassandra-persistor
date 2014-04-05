@@ -56,12 +56,26 @@ An example could look like
     }
     
 #### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra. *Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way!*
+`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra. *Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way! And use `'` instead of `"` for strings.*
 
 #### Returns
 The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections!*
 
-# Personal Note
+## General Responses
+In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. I looks like
+
+    {
+        "status": "ok"
+    }
+    
+or in case of errors
+
+    {
+        "status": "error",
+        "message": <errorDescription>
+    }
+
+## Personal Note
 *I don't know if this is very useful or already developed and published by others but I used it in private to test some ideas around Vert.x and Cassandra. As I was not able to find something similar very quickly I created this project. I hope this can be useful to you... with all its Bugs and Issues ;)* 
 
   [1]: http://vertx.io
