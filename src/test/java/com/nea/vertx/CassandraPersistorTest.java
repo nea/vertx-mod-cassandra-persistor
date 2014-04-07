@@ -216,8 +216,7 @@ public class CassandraPersistorTest extends TestVerticle {
 			}
 		});
 	}
-	
-	
+		
 	/**
 	 * 
 	 */
@@ -258,10 +257,77 @@ public class CassandraPersistorTest extends TestVerticle {
 								assertNotNull(reply);
 								assertNotNull(reply.body());
 								assertEquals(1, reply.body().size());
+								assertThat(reply.body().get(0), instanceOf(JsonObject.class));
 								//
 								JsonObject result = (JsonObject)reply.body().get(0);
 								assertEquals("Unit", result.getString("key"));
 								assertEquals("Test", result.getString("value"));
+
+							} catch(Exception e) {
+							}
+							
+							//
+							testComplete();
+						}
+					});
+
+				} catch(Exception e) {
+				}
+			}
+		});
+	}
+	
+	/**
+	 * 
+	 */
+	@Test
+	public void testBatchInsert() {
+		//
+		JsonObject insert = new JsonObject();
+		insert.putString("action", "raw");
+		JsonArray batch = new JsonArray();
+		batch.addString("INSERT INTO vertxpersistor.fulltable (id, key, value) VALUES(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, 'Unit1', 'Test1')");
+		batch.addString("INSERT INTO vertxpersistor.fulltable (id, key, value) VALUES(bbbbbbbb-2e54-4715-9f00-91dcbea6cf50, 'Unit2', 'Test2')");
+		insert.putArray("statements", batch);
+
+		//
+		vertx.eventBus().send("nea.vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
+			@Override
+			public void handle(Message<JsonObject> reply) {
+				//
+				try {
+					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+					// Tests
+					assertNotNull(reply);
+					assertNotNull(reply.body());
+					assertEquals("ok", reply.body().getString("status"));
+					
+					//
+					JsonObject select = new JsonObject();
+					select.putString("action", "raw");
+					select.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id IN(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, bbbbbbbb-2e54-4715-9f00-91dcbea6cf50)");
+
+					//
+					vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
+						@Override
+						public void handle(Message<JsonArray> reply) {
+							//
+							try {
+								container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+								// Tests
+								assertNotNull(reply);
+								assertNotNull(reply.body());
+								assertEquals(2, reply.body().size());								
+								//
+								for(Object result : reply.body()) {
+									assertThat(result, instanceOf(JsonObject.class));
+									//
+									JsonObject resultRow = (JsonObject)result;
+									assertTrue(resultRow.getString("key").startsWith("Unit"));
+									assertTrue(resultRow.getString("value").startsWith("Test"));
+								}
 
 							} catch(Exception e) {
 							}

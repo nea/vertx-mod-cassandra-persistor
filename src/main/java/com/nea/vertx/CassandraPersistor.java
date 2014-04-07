@@ -13,6 +13,7 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
+import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.Host;
@@ -20,6 +21,8 @@ import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.Statement;
 
 /**
  * 
@@ -144,7 +147,29 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	protected void raw(Message<JsonObject> message) {
 		//
 		JsonObject rawMessage = message.body();
-		String query = rawMessage.getString("statement");
+		
+		//
+		Statement query = null;
+		try {
+			String statement = rawMessage.getString("statement");
+			//
+			if(statement != null) {
+				query = new SimpleStatement(statement);
+				
+			} else {
+				//Batch
+				JsonArray statements = rawMessage.getArray("statements");
+				query = new BatchStatement();
+				for(Object stmt : statements) {
+					((BatchStatement)query).add(new SimpleStatement(stmt.toString()));
+				}
+			}			
+			
+		} catch(Exception e) {
+			// An error happened
+			sendError(message, "[Cassandra Persistor] Could not create query statement!", e);
+			return;
+		}
 
 		//
 		ResultSet resultSet = null;
