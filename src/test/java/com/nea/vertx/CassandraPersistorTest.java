@@ -3,7 +3,7 @@ package com.nea.vertx;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.vertx.testtools.VertxAssert.assertNotNull;
 import static org.vertx.testtools.VertxAssert.assertThat;
-import static org.vertx.testtools.VertxAssert.assertTrue;
+import static org.vertx.testtools.VertxAssert.*;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
 import org.cassandraunit.CQLDataLoader;
@@ -66,10 +66,7 @@ public class CassandraPersistorTest extends TestVerticle {
 	 * 
 	 */
 	@Test
-	public void testRawStatements() {
-		//
-		container.logger().info("[" + getClass().getName() + "] Testing raw Statements...");
-
+	public void testWithResults() {
 		//
 		JsonObject select = new JsonObject();
 		select.putString("action", "raw");
@@ -88,8 +85,69 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply.body());					
 					assertThat(reply.body(), instanceOf(JsonArray.class));
 					
-					//
-					container.logger().info("[" + getClass().getName() + "] ...tested raw statements!");
+				} catch(Exception e) {					
+				}
+				
+				//
+				testComplete();
+			}
+		});
+	}
+	
+	/**
+	 * 
+	 */
+	@Test
+	public void testWithoutResults() {
+		//
+		JsonObject select = new JsonObject();
+		select.putString("action", "raw");
+		select.putString("statement", "SELECT * FROM vertxpersistor.emptytable");
+
+		//
+		vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
+			@Override
+			public void handle(Message<JsonObject> reply) {
+				//
+				try {
+					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+					
+					//Tests
+					assertNotNull(reply);
+					assertNotNull(reply.body());
+					assertEquals("ok", reply.body().getString("status"));
+					
+				} catch(Exception e) {					
+				}
+				
+				//
+				testComplete();
+			}
+		});
+	}
+	
+	/**
+	 * 
+	 */
+	@Test
+	public void testError() {
+		//
+		JsonObject select = new JsonObject();
+		select.putString("action", "raw");
+		select.putString("statement", "SELECT * FROM vertxpersistor.unavailabletable");
+
+		//
+		vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
+			@Override
+			public void handle(Message<JsonObject> reply) {
+				//
+				try {
+					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+					
+					//Tests
+					assertNotNull(reply);
+					assertNotNull(reply.body());
+					assertEquals("error", reply.body().getString("status"));
 					
 				} catch(Exception e) {					
 				}
