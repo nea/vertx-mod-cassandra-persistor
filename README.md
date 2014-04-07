@@ -5,11 +5,13 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 
 * Module `com.nea.vertx~mod-cassandra-persistor~X.X.X`
 * Worker Verticle
-* Multi-threaded
 * EventBus JSON-based
 * CQL3
 
 ## Versions
+* 0.0.3
+    * Added support for basic `map`s
+    * Added support for `date` type
 * 0.0.2
     * Added support to configure a port
     * Added embedded Cassandra-Unit test support
@@ -42,7 +44,7 @@ An exemplary configuration could look like
 * `address` *optional* The main address for the module. Every module has a main address. Defaults to `nea.vertx.cassandra.persistor`
 * `hosts` *optional* A string array of host IPs the module connects to as contact points. Defaults to `127.0.0.1`
 * `port` *optional* The port (number) the Cassandra instances are running on. All hosts must have Cassandra running on the same port. Defaults to `9042`
-* `keyspace` *optional* The Cassandra keyspace to use. Defaults to `vertxpersistor`.
+* `keyspace` *optional* The Cassandra keyspace to use. Defaults to `vertxpersistor`. 
 
 ## Operations
 
@@ -65,7 +67,7 @@ An example could look like
 `statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra. *Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way! And use `'` instead of `"` for strings.*
 
 #### Returns
-The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections!*
+The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections. Complex Types are not handled at the moment!*
 
 ## General Responses
 In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. It looks like
