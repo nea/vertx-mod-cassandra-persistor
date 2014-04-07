@@ -9,6 +9,8 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Versions
+* 0.1.0
+    * Added `raw` batch support 
 * 0.0.3
     * Added support for basic `map`s
     * Added support for `date` type
@@ -53,7 +55,7 @@ An exemplary configuration could look like
 
     {
         "action": "raw",
-        "statement": <cql3Statement>
+        "statement": <cql3Statement> | "statements": [<cql3BatchStatements>]
     }
     
 An example could look like
@@ -63,8 +65,23 @@ An example could look like
         "statement": "SELECT * FROM superkeyspace.tablewithinfos"
     }
     
+or
+
+    {
+        "action": "raw",
+        "statements": [
+            "INSERT INTO superkeyspace.tablewithinfos (key, value) VALUES('Key 1', 'Value 1')",
+            "INSERT INTO superkeyspace.tablewithinfos (key, value) VALUES('Key 2', 'Value 2')"
+        ]
+    }
+    
+where `statement` is preferred over `statements`.
+    
 #### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra. *Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way! And use `'` instead of `"` for strings.*
+`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra.
+`statements` A JsonArray of Cassandra Query Language version 3 (CQL3) compliant queries that are channeled through to the driver and Cassandra. Only `UPDATE`, `INSERT` and `DELETE` are allowed.
+
+*Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way! And use `'` instead of `"` for strings.*
 
 #### Returns
 The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections. Complex Types are not handled at the moment!*
