@@ -1,6 +1,9 @@
 package com.nea.vertx;
 
 import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.vertx.java.busmods.BusModBase;
@@ -119,7 +122,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		//
 		try {
 			switch(action) {
-			// Channel the raw statements
+				// Channel the raw statements
 				case "raw":
 					raw(message);
 					break;
@@ -190,7 +193,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		// Return the result array
 		message.reply(retVals);
-	}
+	}	
 
 	/**
 	 * 
@@ -210,6 +213,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		} else if(columnValue instanceof Boolean) {
 			retVal.putBoolean(columnName, (Boolean) columnValue);
 
+		} else if(columnValue instanceof Date) {
+			retVal.putString(columnName, ((Date) columnValue).toString());
+			
 		} else if(columnValue instanceof UUID) {
 			retVal.putString(columnName, ((UUID) columnValue).toString());
 
@@ -217,12 +223,19 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			retVal.putBinary(columnName, (byte[]) columnValue);
 
 		} else if(columnValue instanceof Collection<?>) {
+			retVal.putArray(columnName, addColumnCollection((Collection<?>) columnValue, new JsonArray()));
+			
+		} else if(columnValue instanceof Map<?, ?>) {
 			//
-			JsonArray retArray = new JsonArray();
+			JsonObject retMap = new JsonObject();
 			//
-			retArray = addColumnCollection((Collection<?>) columnValue, retArray);
+			Map<?, ?> columnValueMap = (Map<?, ?>)columnValue;
+			for(Entry<?, ?> entry : columnValueMap.entrySet()) {
+				addColumn(entry.getKey().toString(), entry.getValue(), retMap);
+			}
+			
 			//
-			retVal.putArray(columnName, retArray);
+			retVal.putObject(columnName, retMap);
 
 		} else {
 			// If nothing works, try to add the object directly but catch if not
@@ -255,6 +268,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 			} else if(collectionValue instanceof Boolean) {
 				retVal.addBoolean((Boolean) collectionValue);
+				
+			} else if(columnValue instanceof Date) {
+				retVal.addString(((Date) columnValue).toString());
 
 			} else if(collectionValue instanceof UUID) {
 				retVal.addString(((UUID) collectionValue).toString());
