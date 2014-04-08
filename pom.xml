@@ -6,7 +6,7 @@
 	<groupId>com.insanitydesign</groupId>
 	<artifactId>vertx-mod-cassandra-persistor</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1.1-SNAPSHOT</version>
+	<version>0.1.1</version>
 	<name>Vert.x Cassandra Persistor Module</name>
 	<url>https://github.com/nea/vertx-mod-cassandra-persistor</url>
 	<description>This very simple Vert.x module allows to store and retrieve data from a Cassandra instance or cluster. It uses the the DataStax Java Driver 2.0.</description>
@@ -32,7 +32,7 @@
 
 	<developers>
 		<developer>
-			<name>Savas Ziplies</name>
+			<name>nea</name>
 			<email>nea@insanitydesign</email>
 			<organizationUrl>https://github.com/nea/vertx-mod-cassandra-persistor</organizationUrl>
 		</developer>
