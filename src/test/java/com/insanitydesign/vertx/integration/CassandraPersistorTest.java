@@ -1,4 +1,4 @@
-package com.nea.vertx.integration;
+package com.insanitydesign.vertx.integration;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.vertx.testtools.VertxAssert.assertEquals;
@@ -78,7 +78,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		select.putString("statement", "SELECT * FROM vertxpersistor.fulltable");
 
 		//
-		vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
+		vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
 			@Override
 			public void handle(Message<JsonArray> reply) {
 				//
@@ -110,7 +110,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		select.putString("statement", "SELECT * FROM vertxpersistor.emptytable");
 
 		//
-		vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
+		vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
 			@Override
 			public void handle(Message<JsonObject> reply) {
 				//
@@ -142,7 +142,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		select.putString("statement", "SELECT * FROM vertxpersistor.unavailabletable");
 
 		//
-		vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
+		vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
 			@Override
 			public void handle(Message<JsonObject> reply) {
 				//
@@ -174,7 +174,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		create.putString("statement", "CREATE TABLE vertxpersistor.newtable (id uuid PRIMARY KEY, field text)");
 
 		//
-		vertx.eventBus().send("nea.vertx.cassandra.persistor", create, new Handler<Message<JsonObject>>() {
+		vertx.eventBus().send("vertx.cassandra.persistor", create, new Handler<Message<JsonObject>>() {
 			@Override
 			public void handle(Message<JsonObject> reply) {
 				//
@@ -192,7 +192,7 @@ public class CassandraPersistorTest extends TestVerticle {
 					select.putString("statement", "SELECT * FROM vertxpersistor.newtable");
 
 					//
-					vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
+					vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonObject>>() {
 						@Override
 						public void handle(Message<JsonObject> reply) {
 							//
@@ -228,7 +228,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		insert.putString("statement", "INSERT INTO vertxpersistor.fulltable (id, key, value) VALUES(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, 'Unit', 'Test')");
 
 		//
-		vertx.eventBus().send("nea.vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
+		vertx.eventBus().send("vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
 			@Override
 			public void handle(Message<JsonObject> reply) {
 				//
@@ -246,7 +246,7 @@ public class CassandraPersistorTest extends TestVerticle {
 					select.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id = aaaaaaaa-2e54-4715-9f00-91dcbea6cf50");
 
 					//
-					vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
+					vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
 						@Override
 						public void handle(Message<JsonArray> reply) {
 							//
@@ -291,7 +291,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		insert.putArray("statements", batch);
 
 		//
-		vertx.eventBus().send("nea.vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
+		vertx.eventBus().send("vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
 			@Override
 			public void handle(Message<JsonObject> reply) {
 				//
@@ -309,7 +309,7 @@ public class CassandraPersistorTest extends TestVerticle {
 					select.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id IN(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, bbbbbbbb-2e54-4715-9f00-91dcbea6cf50)");
 
 					//
-					vertx.eventBus().send("nea.vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
+					vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
 						@Override
 						public void handle(Message<JsonArray> reply) {
 							//

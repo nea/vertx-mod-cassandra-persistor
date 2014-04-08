@@ -3,12 +3,14 @@ This very simple [Vert.x][1] module allows to store and retrieve data from a [Ca
 
 It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for highest performance (e.g. also no prepared statements) but straight-forward integration with Cassandra. 
 
-* Module `com.nea.vertx~mod-cassandra-persistor~X.X.X`
+* Module `com.insanitydesign~vertx-mod-cassandra-persistor~X.X.X`
 * Worker Verticle
 * EventBus JSON-based
 * CQL3
 
 ## Versions
+* 0.1.1
+    * Changed group-id and default module address 
 * 0.1.0
     * Added `raw` batch support 
 * 0.0.3
@@ -43,7 +45,7 @@ An exemplary configuration could look like
     }
 
 ### Fields
-* `address` *optional* The main address for the module. Every module has a main address. Defaults to `nea.vertx.cassandra.persistor`
+* `address` *optional* The main address for the module. Every module has a main address. Defaults to `vertx.cassandra.persistor`
 * `hosts` *optional* A string array of host IPs the module connects to as contact points. Defaults to `127.0.0.1`
 * `port` *optional* The port (number) the Cassandra instances are running on. All hosts must have Cassandra running on the same port. Defaults to `9042`
 * `keyspace` *optional* The Cassandra keyspace to use. Defaults to `vertxpersistor`. 

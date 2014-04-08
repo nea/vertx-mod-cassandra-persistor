@@ -1,6 +1,6 @@
 {
 	//Configuration
-  	"main":"com.nea.vertx.CassandraPersistor",
+  	"main":"com.insanitydesign.vertx.CassandraPersistor",
   	"worker": true,
   	"multi-threaded": true,
 

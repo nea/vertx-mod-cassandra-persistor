@@ -1,4 +1,4 @@
-package com.nea.vertx;
+package com.insanitydesign.vertx;
 
 import java.util.Collection;
 import java.util.Date;
@@ -62,7 +62,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		LOG.info("[Cassandra Persistor] Booting up...");
 
 		//
-		setAddress(getOptionalStringConfig("address", "nea.vertx.cassandra.persistor"));
+		setAddress(getOptionalStringConfig("address", "vertx.cassandra.persistor"));
 		setHosts(getOptionalArrayConfig("hosts", new JsonArray("[\"127.0.0.1\"]")));
 		setPort(getOptionalIntConfig("port", 9042));
 		setKeyspace(getOptionalStringConfig("keyspace", "vertxpersistor"));
