@@ -1,4 +1,4 @@
-package com.nea.vertx;
+package com.nea.vertx.integration;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.vertx.testtools.VertxAssert.assertEquals;
