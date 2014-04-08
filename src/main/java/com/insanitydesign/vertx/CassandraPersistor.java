@@ -25,32 +25,34 @@ import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
 
 /**
+ * The main persistor module and handler in one. Connects to Cassandra, registers and handles all actions from the
+ * eventbus to the defined module address.
  * 
  * @author nea@insanitydesign
  */
 public class CassandraPersistor extends BusModBase implements Handler<Message<JsonObject>> {
 
-	/** */
+	/** Global Logger variable for convenience */
 	private Logger LOG;
 
-	/** */
+	/** The configured Cassandra cluster */
 	private Cluster cluster;
 
-	/** */
+	/** The connected session */
 	private Session session;
 
 	/* Configuration */
-	/** */
+	/** The configured address or default */
 	private String address;
-	/** */
+	/** The configured hosts or default */
 	private JsonArray hosts;
-	/** */
+	/** The configured port or default */
 	private int port;
-	/** */
+	/** The configured keyspace or default */
 	private String keyspace;
 
 	/**
-	 * 
+	 * Boot up the verticle and connect to the configured Cassandra cluster.
 	 */
 	@Override
 	public void start() {
@@ -109,7 +111,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
-	 * 
+	 * Handle all incoming actions and process unknown ones.
 	 */
 	@Override
 	public void handle(Message<JsonObject> message) {
@@ -125,7 +127,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		//
 		try {
 			switch(action) {
-				// Channel the raw statements
+			// Channel the raw statements
 				case "raw":
 					raw(message);
 					break;
@@ -141,13 +143,14 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
+	 * Processes raw Cassandra CQL3 statement(s) and returns the resultset as JsonArray (if any)
 	 * 
 	 * @param message
 	 */
 	protected void raw(Message<JsonObject> message) {
 		//
 		JsonObject rawMessage = message.body();
-		
+
 		//
 		Statement query = null;
 		try {
@@ -155,16 +158,16 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			//
 			if(statement != null) {
 				query = new SimpleStatement(statement);
-				
+
 			} else {
-				//Batch
+				// Batch
 				JsonArray statements = rawMessage.getArray("statements");
 				query = new BatchStatement();
 				for(Object stmt : statements) {
-					((BatchStatement)query).add(new SimpleStatement(stmt.toString()));
+					((BatchStatement) query).add(new SimpleStatement(stmt.toString()));
 				}
-			}			
-			
+			}
+
 		} catch(Exception e) {
 			// An error happened
 			sendError(message, "[Cassandra Persistor] Could not create query statement!", e);
@@ -209,7 +212,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 				Object columnValue = rowColumnDefinitions.getType(i).deserialize(row.getBytesUnsafe(i));
 
 				// Parse the returning object to a supported type
-				retVal = addColumn(rowColumnDefinitions.getName(i), columnValue, retVal);
+				retVal = addRow(rowColumnDefinitions.getName(i), columnValue, retVal);
 			}
 
 			// Add the row
@@ -218,16 +221,17 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		// Return the result array
 		message.reply(retVals);
-	}	
+	}
 
 	/**
+	 * Process the different types of values possible.
 	 * 
 	 * @param columnName
 	 * @param columnValue
 	 * @param retVal
-	 * @return
+	 * @return The JsonObject representing this row entry
 	 */
-	protected JsonObject addColumn(String columnName, Object columnValue, JsonObject retVal) {
+	protected JsonObject addRow(String columnName, Object columnValue, JsonObject retVal) {
 		//
 		if(columnValue instanceof Number) {
 			retVal.putNumber(columnName, (Number) columnValue);
@@ -240,7 +244,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		} else if(columnValue instanceof Date) {
 			retVal.putString(columnName, ((Date) columnValue).toString());
-			
+
 		} else if(columnValue instanceof UUID) {
 			retVal.putString(columnName, ((UUID) columnValue).toString());
 
@@ -248,17 +252,17 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			retVal.putBinary(columnName, (byte[]) columnValue);
 
 		} else if(columnValue instanceof Collection<?>) {
-			retVal.putArray(columnName, addColumnCollection((Collection<?>) columnValue, new JsonArray()));
-			
+			retVal.putArray(columnName, addCollection((Collection<?>) columnValue, new JsonArray()));
+
 		} else if(columnValue instanceof Map<?, ?>) {
 			//
 			JsonObject retMap = new JsonObject();
 			//
-			Map<?, ?> columnValueMap = (Map<?, ?>)columnValue;
+			Map<?, ?> columnValueMap = (Map<?, ?>) columnValue;
 			for(Entry<?, ?> entry : columnValueMap.entrySet()) {
-				addColumn(entry.getKey().toString(), entry.getValue(), retMap);
+				addRow(entry.getKey().toString(), entry.getValue(), retMap);
 			}
-			
+
 			//
 			retVal.putObject(columnName, retMap);
 
@@ -276,12 +280,13 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
+	 * Process the collections (List and Set) and add the values to an array to return.
 	 * 
 	 * @param columnValue
 	 * @param retVal
-	 * @return
+	 * @return The JsonArray representing these collection values 
 	 */
-	protected JsonArray addColumnCollection(Collection<?> columnValue, JsonArray retVal) {
+	protected JsonArray addCollection(Collection<?> columnValue, JsonArray retVal) {
 		//
 		for(Object collectionValue : columnValue) {
 			//
@@ -293,7 +298,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 			} else if(collectionValue instanceof Boolean) {
 				retVal.addBoolean((Boolean) collectionValue);
-				
+
 			} else if(columnValue instanceof Date) {
 				retVal.addString(((Date) columnValue).toString());
 
@@ -304,7 +309,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 				retVal.addBinary((byte[]) collectionValue);
 
 			} else if(collectionValue instanceof Collection<?>) {
-				retVal.addArray(addColumnCollection((Collection<?>) collectionValue, new JsonArray()));
+				retVal.addArray(addCollection((Collection<?>) collectionValue, new JsonArray()));
 
 			} else {
 				// If nothing works, try to add the object directly but catch if not
@@ -320,6 +325,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
+	 * Convenience general error message handler
 	 * 
 	 * @param message
 	 * @param e
