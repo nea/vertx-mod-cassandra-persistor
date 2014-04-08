@@ -1,2 +1,4 @@
 language: java
+services:
+  - cassandra
 script: mvn integration-test install
