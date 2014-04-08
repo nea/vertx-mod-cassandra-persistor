@@ -34,9 +34,9 @@ public class CassandraPersistorTest extends TestVerticle {
 	static {
 		// Boot up Cassandra-Unit...
 		try {
-			EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+			EmbeddedCassandraServerHelper.startEmbeddedCassandra("/cassandra.yaml");
 			// ...and load the example data
-			Session session = Cluster.builder().addContactPoint("127.0.0.1").withPort(9142).build().connect();
+			Session session = Cluster.builder().addContactPoint("127.0.0.1").build().connect();
 			CQLDataLoader cqlDataLoader = new CQLDataLoader(session);
 			cqlDataLoader.load(new ClassPathCQLDataSet("cassandraPersistorExampleData.cql"));
 
@@ -54,7 +54,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		initialize();
 		JsonObject config = new JsonObject();
 		config.putArray("hosts", new JsonArray().add("127.0.0.1"));
-		config.putNumber("port", 9142);
+//		config.putNumber("port", 9142);
 
 		//
 		container.logger().info("[Cassandra Persistor Test] Starting test of module " + System.getProperty("vertx.modulename"));
