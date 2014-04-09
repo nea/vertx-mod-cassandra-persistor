@@ -8,19 +8,16 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * EventBus JSON-based
 * CQL3
 
-## Versions
+## Latest Versions
 * 0.1.1
-    * Changed group-id and default module address 
+    * Changed group-id and default module address
 * 0.1.0
     * Added `raw` batch support 
 * 0.0.3
     * Added support for basic `map`s
     * Added support for `date` type
-* 0.0.2
-    * Added support to configure a port
-    * Added embedded Cassandra-Unit test support
-* 0.0.1
-    * Basic `raw` statement support
+
+For a full version history go [here][5].
 
 ## Dependencies
 This Persistor has only been developed and tested with Cassandra 2.x/CQL3. To use it you of course have to have a Cassandra instance running and accessible through the network, where this Module is running.
@@ -105,7 +102,9 @@ or in case of errors
 ## Personal Note
 *I don't know if this is very useful or already developed and published by others but I used it in private to test some ideas around Vert.x and Cassandra. As I was not able to find something similar very quickly I created this project. I hope this can be useful to you... with all its Bugs and Issues ;)* 
 
+
   [1]: http://vertx.io
   [2]: http://cassandra.apache.org/
   [3]: http://www.datastax.com/documentation/developer/java-driver/2.0
   [4]: https://github.com/vert-x/mod-mongo-persistor
+  [5]: https://github.com/nea/vertx-mod-cassandra-persistor/wiki/Version-History

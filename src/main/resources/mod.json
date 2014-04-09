@@ -7,7 +7,7 @@
   	//Information
   	"description":"Store and retrieve data from Cassandra",
   	"licenses": ["The MIT License (MIT)"],
-  	"author": "nea@insanitydesign",
+  	"author": "INsanityDesign",
   	"keywords": ["cassandra","module","persistor","persistency"],
   	"homepage": "https://github.com/nea/vertx-mod-cassandra-persistor",
 

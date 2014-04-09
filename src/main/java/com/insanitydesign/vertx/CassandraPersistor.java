@@ -28,7 +28,7 @@ import com.datastax.driver.core.Statement;
  * The main persistor module and handler in one. Connects to Cassandra, registers and handles all actions from the
  * eventbus to the defined module address.
  * 
- * @author nea@insanitydesign
+ * @author insanitydesign
  */
 public class CassandraPersistor extends BusModBase implements Handler<Message<JsonObject>> {
 

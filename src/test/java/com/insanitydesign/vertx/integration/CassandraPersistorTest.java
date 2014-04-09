@@ -24,7 +24,7 @@ import com.datastax.driver.core.Session;
 
 /**
  * 
- * @author nea@insanitydesign
+ * @author insanitydesign
  */
 public class CassandraPersistorTest extends TestVerticle {
 
