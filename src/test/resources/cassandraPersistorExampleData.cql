@@ -14,7 +14,8 @@ CREATE TABLE fulltable(
     valuelist list<varchar>,
     valuemap map<varchar, varchar>,
     date timestamp,
-    isValid boolean
+    isValid boolean,
+    number int
     );
 
 INSERT INTO fulltable (id, key, value, valueset) VALUES (756716f7-2e54-4715-9f00-91dcbea6cf50, 'Key 1', 'Hello', {'Set A', 'Set B'});

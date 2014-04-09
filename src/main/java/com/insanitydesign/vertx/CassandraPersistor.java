@@ -1,5 +1,6 @@
 package com.insanitydesign.vertx;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -14,10 +15,12 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 import com.datastax.driver.core.BatchStatement;
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -132,6 +135,10 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 					raw(message);
 					break;
 
+				case "prepared":
+					prepared(message);
+					break;
+
 				default:
 					sendError(message, "[Cassandra Persistor] Action '" + action + "' unknown!");
 			}
@@ -139,6 +146,62 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			//
 		} catch(Exception e) {
 			sendError(message, e);
+		}
+	}
+
+	/**
+	 * 
+	 * @param message
+	 */
+	protected void prepared(Message<JsonObject> message) {
+		//
+		JsonObject preparedMessage = message.body();
+
+		//
+		String statement = preparedMessage.getString("statement");
+		JsonArray values = preparedMessage.getArray("values");
+
+		//
+		BatchStatement query = new BatchStatement();
+		PreparedStatement preparedStmt = getSession().prepare(statement);
+		//
+		for(int i = 0; i < values.size(); i++) {
+			//
+			JsonArray valueList = values.get(i);
+			//
+			BoundStatement boundStmt = preparedStmt.bind();
+			//
+			Object[] valueArray = valueList.toArray();
+			for(int j = 0; j < valueArray.length; j++) {
+				//
+				if(valueArray[j] instanceof String) {
+					try {						
+						valueArray[j] = UUID.fromString((String)valueArray[j]);
+						continue;
+						
+					} catch(Exception e) {						
+					}
+				}
+			}
+			//
+			query.add(boundStmt.bind(valueArray));
+		}
+
+		//
+		ResultSet resultSet = null;
+		try {
+			resultSet = getSession().execute(query);
+
+		} catch(Exception e) {
+			// An error happened
+			sendError(message, e);
+			return;
+		}
+
+		// Query went through but without results
+		if(resultSet == null || resultSet.getAvailableWithoutFetching() <= 0) {
+			sendOK(message);
+			return;
 		}
 	}
 
@@ -284,7 +347,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * 
 	 * @param columnValue
 	 * @param retVal
-	 * @return The JsonArray representing these collection values 
+	 * @return The JsonArray representing these collection values
 	 */
 	protected JsonArray addCollection(Collection<?> columnValue, JsonArray retVal) {
 		//

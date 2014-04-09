@@ -9,13 +9,12 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.2.0
+    * Added support for `raw` PreparedStatements
 * 0.1.1
     * Changed group-id and default module address
 * 0.1.0
     * Added `raw` batch support 
-* 0.0.3
-    * Added support for basic `map`s
-    * Added support for `date` type
 
 For a full version history go [here][5].
 
@@ -84,6 +83,30 @@ where `statement` is preferred over `statements`.
 
 #### Returns
 The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections. Complex Types are not handled at the moment!*
+
+### Prepared
+*Please use with care!*
+
+    {
+        "action": "prepared",
+        "statement": <cql3Statement>,
+        "values": {[<valueList>]}
+    }
+    
+An example could look like
+
+    {
+        "action": "prepared",
+        "statement": "INSERT INTO superkeyspace.tablewithinfos (id, key, value) VALUES(?, ? ,?)"
+        "values": [
+            [3a708930-c005-11e3-8a33-0800200c9a66, "Key A", "Value A"],
+            [3a708931-c005-11e3-8a33-0800200c9a66, "Key B", "Value B"]
+        ]
+    }
+    
+#### Fields
+`statement` A Cassandra Query Language version 3 (CQL3) compliant prepared statement query that is channeled through to the driver and Cassandra. Only `UPDATE`, `INSERT` and `DELETE` are allowed.
+`values` A JsonArray of JsonArrays with the values. Every value list will create its bindings and be executed in a batched statement.
 
 ## General Responses
 In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. It looks like
