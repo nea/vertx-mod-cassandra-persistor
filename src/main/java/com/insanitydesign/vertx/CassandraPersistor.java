@@ -1,6 +1,5 @@
 package com.insanitydesign.vertx;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -162,46 +161,42 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		JsonArray values = preparedMessage.getArray("values");
 
 		//
-		BatchStatement query = new BatchStatement();
 		PreparedStatement preparedStmt = getSession().prepare(statement);
+
+		//
+		BatchStatement query = new BatchStatement();
 		//
 		for(int i = 0; i < values.size(); i++) {
 			//
 			JsonArray valueList = values.get(i);
 			//
 			BoundStatement boundStmt = preparedStmt.bind();
-			//
-			Object[] valueArray = valueList.toArray();
-			for(int j = 0; j < valueArray.length; j++) {
-				//
-				if(valueArray[j] instanceof String) {
-					try {						
-						valueArray[j] = UUID.fromString((String)valueArray[j]);
-						continue;
-						
-					} catch(Exception e) {						
-					}
-				}
-			}
-			//
-			query.add(boundStmt.bind(valueArray));
+			query.add(boundStmt.bind(parseArray(valueList.toArray())));
 		}
 
 		//
-		ResultSet resultSet = null;
-		try {
-			resultSet = getSession().execute(query);
+		if(statement.trim().toLowerCase().startsWith("select")) {
+			//
+			JsonArray allRetVals = new JsonArray();
+			//
+			for(Statement stmt : query.getStatements()) {
+				ResultSet resultSet = execute(stmt, message);
+				// Error or empty => Continue
+				if(resultSet == null || resultSet.getAvailableWithoutFetching() <= 0) {
+					continue;
+				}
 
-		} catch(Exception e) {
-			// An error happened
-			sendError(message, e);
-			return;
-		}
+				//
+				allRetVals.addArray(processResult(resultSet, new JsonArray()));
+			}
+			// Return the result array
+			message.reply(allRetVals);
 
-		// Query went through but without results
-		if(resultSet == null || resultSet.getAvailableWithoutFetching() <= 0) {
-			sendOK(message);
-			return;
+		} else {
+			//
+			if(execute(query, message) != null) {
+				sendOK(message);
+			}
 		}
 	}
 
@@ -238,25 +233,48 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		}
 
 		//
-		ResultSet resultSet = null;
-		try {
-			resultSet = getSession().execute(query);
-
-		} catch(Exception e) {
-			// An error happened
-			sendError(message, e);
+		ResultSet resultSet = execute(query, message);
+		//
+		if(resultSet == null) {
 			return;
 		}
 
 		// Query went through but without results
-		if(resultSet == null || resultSet.getAvailableWithoutFetching() <= 0) {
+		if(resultSet.getAvailableWithoutFetching() <= 0) {
 			sendOK(message);
 			return;
 		}
 
-		// The returned result array
-		JsonArray retVals = new JsonArray();
+		// Return the result array
+		message.reply(processResult(resultSet, new JsonArray()));
+	}
 
+	/**
+	 * 
+	 * @param statement
+	 * @param message
+	 * @return
+	 */
+	protected ResultSet execute(Statement statement, Message<JsonObject> message) {
+		ResultSet resultSet = null;
+		try {
+			resultSet = getSession().execute(statement);
+
+		} catch(Exception e) {
+			// An error happened
+			sendError(message, e);
+		}
+
+		return resultSet;
+	}
+
+	/**
+	 * 
+	 * @param resultSet
+	 * @param retVals
+	 * @return
+	 */
+	protected JsonArray processResult(ResultSet resultSet, JsonArray retVals) {
 		// Iterate the results
 		for(Row row : resultSet) {
 			// Row result
@@ -282,8 +300,32 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			retVals.addObject(retVal);
 		}
 
-		// Return the result array
-		message.reply(retVals);
+		//
+		return retVals;
+	}
+
+	/**
+	 * Parses the given array of Objects to identify UUID strings to parse them to a native object
+	 * 
+	 * @param valueArray
+	 * @return
+	 */
+	protected Object[] parseArray(Object[] valueArray) {
+		//
+		for(int j = 0; j < valueArray.length; j++) {
+			//
+			if(valueArray[j] instanceof String) {
+				try {
+					valueArray[j] = UUID.fromString((String) valueArray[j]);
+					continue;
+
+				} catch(Exception e) {
+				}
+			}
+		}
+
+		//
+		return valueArray;
 	}
 
 	/**

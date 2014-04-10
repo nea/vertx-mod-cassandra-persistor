@@ -10,7 +10,7 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 
 ## Latest Versions
 * 0.2.0
-    * Added support for `raw` PreparedStatements
+    * Added support for PreparedStatements
 * 0.1.1
     * Changed group-id and default module address
 * 0.1.0
@@ -82,10 +82,10 @@ where `statement` is preferred over `statements`.
 *Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way! And use `'` instead of `"` for strings.*
 
 #### Returns
-The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections. Complex Types are not handled at the moment!*
+The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). 
+*Note: Value types are not fully interpreted but generally covered as numbers, strings or collections. Complex Types are not handled at the moment!*
 
 ### Prepared
-*Please use with care!*
 
     {
         "action": "prepared",
@@ -105,8 +105,12 @@ An example could look like
     }
     
 #### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant prepared statement query that is channeled through to the driver and Cassandra. Only `UPDATE`, `INSERT` and `DELETE` are allowed.
-`values` A JsonArray of JsonArrays with the values. Every value list will create its bindings and be executed in a batched statement.
+`statement` A Cassandra Query Language version 3 (CQL3) compliant prepared statement query that is channeled through to the driver and Cassandra. Only *SELECT*, *UPDATE*, *INSERT* and *DELETE* are allowed. 
+`values` A JsonArray of JsonArrays with the values. Every value list will create its bindings and be executed in a batched statement (if not a *SELECT* query).
+
+#### Returns
+*Note: Only for `SELECT`*
+The `prepared` action returns a `JsonArray` of `JsonArray`s of `JsonObject`s in the format `columnName:columnValue` (if any result is given). 
 
 ## General Responses
 In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. It looks like

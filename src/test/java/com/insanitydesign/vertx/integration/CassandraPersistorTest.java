@@ -7,8 +7,6 @@ import static org.vertx.testtools.VertxAssert.assertThat;
 import static org.vertx.testtools.VertxAssert.assertTrue;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
-import java.util.UUID;
-
 import org.cassandraunit.CQLDataLoader;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
@@ -427,39 +425,42 @@ public class CassandraPersistorTest extends TestVerticle {
 	/**
 	 * 
 	 */
-//	@Test
-//	public void testPreparedSelect() {
-//		//
-//		JsonObject insert = new JsonObject();
-//		insert.putString("action", "prepared");
-//		insert.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
-//		//
-//		JsonArray values1 = new JsonArray();
-//		values1.addString("756716f7-2e54-4715-9f00-91dcbea6cf50");
-//		JsonArray values2 = new JsonArray();
-//		values2.addString("756716f7-2e54-4715-9f00-91dcb1a6cf50");
-//		JsonArray values = new JsonArray();
-//		values.addArray(values1);
-//		values.addArray(values2);
-//		//		
-//		insert.putArray("values", values);
-//
-//		//
-//		vertx.eventBus().send("vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
-//			@Override
-//			public void handle(Message<JsonObject> reply) {
-//				//
-//				try {
-//					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
-//
-//					// Tests
-//					assertNotNull(reply);
-//					assertNotNull(reply.body());
-//					assertEquals("ok", reply.body().getString("status"));
-//
-//				} catch(Exception e) {
-//				}
-//			}
-//		});
-//	}
+	@Test
+	public void testPreparedSelect() {
+		//
+		JsonObject insert = new JsonObject();
+		insert.putString("action", "prepared");
+		insert.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
+		//
+		JsonArray values1 = new JsonArray();
+		values1.addString("756716f7-2e54-4715-9f00-91dcbea6cf50");
+		JsonArray values2 = new JsonArray();
+		values2.addString("756716f7-2e54-4715-9f00-91dcb1a6cf50");
+		JsonArray values = new JsonArray();
+		values.addArray(values1);
+		values.addArray(values2);
+		//		
+		insert.putArray("values", values);
+
+		//
+		vertx.eventBus().send("vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
+			@Override
+			public void handle(Message<JsonObject> reply) {
+				//
+				try {
+					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+					// Tests
+					assertNotNull(reply);
+					assertNotNull(reply.body());
+					assertThat(reply.body(), instanceOf(JsonArray.class));
+					
+					//
+					testComplete();
+
+				} catch(Exception e) {
+				}
+			}
+		});
+	}
 }
