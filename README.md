@@ -9,12 +9,12 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.2.1
+    * Changed return format for `prepared`
 * 0.2.0
     * Added support for PreparedStatements
 * 0.1.1
     * Changed group-id and default module address
-* 0.1.0
-    * Added `raw` batch support 
 
 For a full version history go [here][5].
 
@@ -110,7 +110,7 @@ An example could look like
 
 #### Returns
 *Note: Only for `SELECT`*
-The `prepared` action returns a `JsonArray` of `JsonArray`s of `JsonObject`s in the format `columnName:columnValue` (if any result is given). 
+The `prepared` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given) combining all results from all prepared invokes.
 
 ## General Responses
 In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. It looks like

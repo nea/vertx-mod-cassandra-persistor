@@ -435,7 +435,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		JsonArray values1 = new JsonArray();
 		values1.addString("756716f7-2e54-4715-9f00-91dcbea6cf50");
 		JsonArray values2 = new JsonArray();
-		values2.addString("756716f7-2e54-4715-9f00-91dcb1a6cf50");
+		values2.addString("156716f7-2e54-4715-9f00-91aaaea6cf50");
 		JsonArray values = new JsonArray();
 		values.addArray(values1);
 		values.addArray(values2);

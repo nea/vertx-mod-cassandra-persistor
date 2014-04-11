@@ -174,7 +174,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		//
 		if(statement.trim().toLowerCase().startsWith("select")) {
 			//
-			JsonArray allRetVals = new JsonArray();
+			JsonArray retVals = new JsonArray();
 			//
 			for(Statement stmt : query.getStatements()) {
 				ResultSet resultSet = execute(stmt, message);
@@ -184,10 +184,10 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 				}
 
 				//
-				allRetVals.addArray(processResult(resultSet, new JsonArray()));
+				processResult(resultSet, retVals);
 			}
 			// Return the result array
-			message.reply(allRetVals);
+			message.reply(retVals);
 
 		} else {
 			//
