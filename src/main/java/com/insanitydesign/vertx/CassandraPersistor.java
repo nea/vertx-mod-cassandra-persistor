@@ -11,7 +11,6 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 
 import com.datastax.driver.core.BatchStatement;
 import com.datastax.driver.core.BoundStatement;
@@ -33,9 +32,6 @@ import com.datastax.driver.core.Statement;
  * @author insanitydesign
  */
 public class CassandraPersistor extends BusModBase implements Handler<Message<JsonObject>> {
-
-	/** Global Logger variable for convenience */
-	private Logger LOG;
 
 	/** The configured Cassandra cluster */
 	private Cluster cluster;
@@ -62,8 +58,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		super.start();
 
 		//
-		this.LOG = container.logger();
-		LOG.info("[Cassandra Persistor] Booting up...");
+		logger.info("[Cassandra Persistor] Booting up...");		
 
 		//
 		setAddress(getOptionalStringConfig("address", "vertx.cassandra.persistor"));
@@ -83,7 +78,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			setCluster(builder.build());
 
 		} catch(Exception e) {
-			LOG.error("[Cassandra Persistor] Cannot add hosts " + getHosts(), e);
+			logger.error("[Cassandra Persistor] Cannot add hosts " + getHosts(), e);
 			return;
 		}
 
@@ -91,17 +86,17 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		try {
 			//
 			Metadata metadata = getCluster().getMetadata();
-			LOG.info("[Cassandra Persistor] Connected to cluster: " + metadata.getClusterName());
+			logger.info("[Cassandra Persistor] Connected to cluster: " + metadata.getClusterName());
 			//
 			for(Host host : metadata.getAllHosts()) {
-				LOG.info("[Cassandra Persistor] DC: " + host.getDatacenter() + " - Host: " + host.getAddress() + " - Rack: "
+				logger.info("[Cassandra Persistor] DC: " + host.getDatacenter() + " - Host: " + host.getAddress() + " - Rack: "
 						+ host.getRack());
 			}
 
 			setSession(getCluster().connect());
 
 		} catch(Exception e) {
-			LOG.error("[Cassandra Persistor] Cannot connect/get session from Cassandra!", e);
+			logger.error("[Cassandra Persistor] Cannot connect/get session from Cassandra!", e);
 			return;
 		}
 
@@ -109,7 +104,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		eb.registerHandler(getAddress(), this);
 
 		//
-		LOG.info("[Cassandra Persistor] ...booted!");
+		logger.info("[Cassandra Persistor] ...booted!");
 	}
 
 	/**
@@ -133,7 +128,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 				case "raw":
 					raw(message);
 					break;
-
+				// Channel prepared statements with their values
 				case "prepared":
 					prepared(message);
 					break;
@@ -149,6 +144,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
+	 * Processes a Cassandra CQL3 prepared statement and returns the resultset as JsonArray of JsonArrays if a SELECT
+	 * query was fired. Just error or ok in the case of altering statements.
 	 * 
 	 * @param message
 	 */
@@ -250,9 +247,12 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
+	 * Execute the given statement, return the resultset and send an error in case of issues
 	 * 
 	 * @param statement
+	 *            The Query to execute
 	 * @param message
+	 *            The Message to reply to in case of errors
 	 * @return
 	 */
 	protected ResultSet execute(Statement statement, Message<JsonObject> message) {
@@ -269,9 +269,12 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
+	 * Iterate over a resultSet and all fields and values to prepare these into an JsonArray of JsonObjects per row.
 	 * 
 	 * @param resultSet
+	 *            The results to iterate over
 	 * @param retVals
+	 *            The JsonArray to add the JsonObjects processed per row
 	 * @return
 	 */
 	protected JsonArray processResult(ResultSet resultSet, JsonArray retVals) {
@@ -305,9 +308,11 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
-	 * Parses the given array of Objects to identify UUID strings to parse them to a native object
+	 * Parses the given array of Objects to identify UUID strings to replace them with the native object. Nothing else
+	 * is changed.
 	 * 
 	 * @param valueArray
+	 *            The array to look for UUIDs
 	 * @return
 	 */
 	protected Object[] parseArray(Object[] valueArray) {
@@ -332,8 +337,11 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * Process the different types of values possible.
 	 * 
 	 * @param columnName
+	 *            The column name to add to the JsonObject row
 	 * @param columnValue
+	 *            The value to identify, process and add to the JsonObject row
 	 * @param retVal
+	 *            The JsonObject to maintain the row values
 	 * @return The JsonObject representing this row entry
 	 */
 	protected JsonObject addRow(String columnName, Object columnValue, JsonObject retVal) {
@@ -376,7 +384,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			try {
 				retVal.putValue(columnName, columnValue);
 			} catch(Exception e) {
-				LOG.info("[Cassandra Persistor] Could not add value of column " + columnName);
+				logger.info("[Cassandra Persistor] Could not add value of column " + columnName);
 			}
 		}
 
@@ -388,7 +396,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * Process the collections (List and Set) and add the values to an array to return.
 	 * 
 	 * @param columnValue
+	 *            The collection of values to iterate and process to be added
 	 * @param retVal
+	 *            The JsonArray to add the values of the collection to
 	 * @return The JsonArray representing these collection values
 	 */
 	protected JsonArray addCollection(Collection<?> columnValue, JsonArray retVal) {
@@ -433,14 +443,16 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * Convenience general error message handler
 	 * 
 	 * @param message
+	 *            The message to send the error to
 	 * @param e
+	 *            The exception to parse and add
 	 */
 	protected void sendError(Message<JsonObject> message, Exception e) {
 		sendError(message, "[Cassandra Persistor] " + e.getMessage(), e);
 	}
 
 	/**
-	 * 
+	 * Cleanup
 	 */
 	@Override
 	public void stop() {
