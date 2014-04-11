@@ -19,11 +19,20 @@ import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
+import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
+import com.datastax.driver.core.policies.Policies;
+import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 /**
  * The main persistor module and handler in one. Connects to Cassandra, registers and handles all actions from the
@@ -48,6 +57,12 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	private int port;
 	/** The configured keyspace or default */
 	private String keyspace;
+	/** The compression to use for Cassandra communication */
+	private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
+	/** How to handle issues and retry based on what policy */
+	private RetryPolicy retryPolicy = Policies.defaultRetryPolicy();
+	/** */
+	private ReconnectionPolicy reconnectionPolicy = Policies.defaultReconnectionPolicy();
 
 	/**
 	 * Boot up the verticle and connect to the configured Cassandra cluster.
@@ -58,13 +73,15 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		super.start();
 
 		//
-		logger.info("[Cassandra Persistor] Booting up...");		
+		logger.info("[Cassandra Persistor] Booting up...");
 
 		//
 		setAddress(getOptionalStringConfig("address", "vertx.cassandra.persistor"));
 		setHosts(getOptionalArrayConfig("hosts", new JsonArray("[\"127.0.0.1\"]")));
 		setPort(getOptionalIntConfig("port", 9042));
 		setKeyspace(getOptionalStringConfig("keyspace", "vertxpersistor"));
+		setCompression(getOptionalStringConfig("compression", "NONE"));
+		setRetryPolicy(getOptionalStringConfig("retry", "default"));
 
 		//
 		Cluster.Builder builder = Cluster.builder();
@@ -72,8 +89,14 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			for(int i = getHosts().size() - 1; i >= 0; --i) {
 				builder = builder.addContactPoint((String) getHosts().get(i));
 			}
-			//
+			// Port
 			builder = builder.withPort(getPort());
+			// Compression
+			builder = builder.withCompression(getCompression());
+			// Retry
+			builder = builder.withRetryPolicy(getRetryPolicy());
+			// Reconnection
+			builder = builder.withReconnectionPolicy(getReconnectionPolicy());
 			//
 			setCluster(builder.build());
 
@@ -520,5 +543,93 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 	public int getPort() {
 		return port;
+	}
+
+	/**
+	 * Derive the compression option from the enum based on the given string. Defaults to NONE.
+	 * 
+	 * @param compression
+	 *            The name of the compression chosen (either NONE, SNAPPY or LZ4)
+	 */
+	public void setCompression(String compression) {
+		try {
+			this.compression = ProtocolOptions.Compression.valueOf(compression);
+		} catch(Exception e) {
+			this.compression = ProtocolOptions.Compression.NONE;
+		}
+	}
+
+	public void setCompression(ProtocolOptions.Compression compression) {
+		this.compression = compression;
+	}
+
+	public ProtocolOptions.Compression getCompression() {
+		return compression;
+	}
+
+	public RetryPolicy getRetryPolicy() {
+		return retryPolicy;
+	}
+
+	public void setRetryPolicy(RetryPolicy retryPolicy) {
+		this.retryPolicy = retryPolicy;
+	}
+
+	/**
+	 * Derive the retry policy from the given string to the implementation. Defaults to {@link DefaultRetryPolicy}.
+	 * 
+	 * @param retryPolicy
+	 *            The name of the retry policy to use. Can be "downgrading" {@link DowngradingConsistencyRetryPolicy} or
+	 *            "fallthrough" {@link FallthroughRetryPolicy}. Everything else defaults to Policies.defaultRetryPolicy()
+	 */
+	public void setRetryPolicy(String retryPolicy) {
+		switch(retryPolicy) {
+			case "downgrading":
+				setRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
+				break;
+
+			case "fallthrough":
+				setRetryPolicy(FallthroughRetryPolicy.INSTANCE);
+				break;
+
+			default:
+				setRetryPolicy(Policies.defaultRetryPolicy());
+				break;
+		}
+	}
+
+	public ReconnectionPolicy getReconnectionPolicy() {
+		return reconnectionPolicy;
+	}
+
+	public void setReconnectionPolicy(ReconnectionPolicy reconnectionPolicy) {
+		this.reconnectionPolicy = reconnectionPolicy;
+	}
+
+	/**
+	 * Set the reconnection policy to define how often and in what interval to retry setup connections.
+	 * 
+	 * @param policy
+	 *            The reconnection policy as string "constant" {@link ConstantReconnectionPolicy} or "exponential"
+	 *            {@link ExponentialReconnectionPolicy}
+	 * @param delay
+	 *            The initial or constant delay
+	 * @param max
+	 *            The maximum delay (only required for {@link ExponentialReconnectionPolicy})
+	 */
+	public void setReconnectionPolicy(String policy, int delay, int... max) {
+		switch(policy) {
+			case "constant":
+				setReconnectionPolicy(new ConstantReconnectionPolicy(delay));
+				break;
+
+			case "exponential":
+				setReconnectionPolicy(new ExponentialReconnectionPolicy(delay, max[0]));
+				break;
+
+			default:
+				setReconnectionPolicy(Policies.defaultReconnectionPolicy());
+				break;
+		}
 	}
 }
