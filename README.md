@@ -1,7 +1,7 @@
 # Vert.x Cassandra Persistor [![Build Status](https://travis-ci.org/nea/vertx-mod-cassandra-persistor.svg?branch=master)](https://travis-ci.org/nea/vertx-mod-cassandra-persistor)
-This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the the [DataStax Java Driver 2.0][3].
+This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.0][3].
 
-It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for highest performance (e.g. also no prepared statements) but straight-forward integration with Cassandra. 
+It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for highest performance but straight-forward integration with Cassandra. 
 
 * Module `com.insanitydesign~vertx-mod-cassandra-persistor~X.X.X`
 * Worker Verticle
