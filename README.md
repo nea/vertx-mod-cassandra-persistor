@@ -40,7 +40,8 @@ The Vert.x Cassandra Persistor takes the following configuration
             "username": <string>,
             "password: <string>
         },
-        "ssl": <boolean>
+        "ssl": <boolean>,
+        "fetchSize": <int>
     }
 
 An exemplary configuration could look like
@@ -60,8 +61,9 @@ An exemplary configuration could look like
 * `compression` *optional* Set the cluster connections compression to `SNAPPY` or `LZ4`. Defaults to `NONE`
 * `retry` *optional* Set the cluster connections retry policy to `DowngradingConsistencyRetryPolicy` or `FallthroughRetryPolicy`. Defaults to `Policies.defaultRetryPolicy()`. See the drivers [JavaDoc][6] for more information.
 * `reconnection` *optional* Set the cluster connections reconnection policy to `ConstantReconnectionPolicy` or `ExponentialReconnectionPolicy` (*exponential* requires `delay` and `max`). Defaults to `ConstantReconnectionPolicy`. See the drivers [JavaDoc][7] for more information.
-* `credentials` A JsonObject containing the *username* and *password* to authenticate at the Cassandra hosts. Defaults to no credentials, expecting an *AllowAll* rule at the cluster.
-* `ssl` Connect via SSL or not. Defaults to not.
+* `credentials` *optional* A JsonObject containing the *username* and *password* to authenticate at the Cassandra hosts. Defaults to no credentials, expecting an *AllowAll* rule at the cluster.
+* `ssl` *optional* Connect via SSL or not. Defaults to not.
+* `fetchSize` *optional* The default fetch size for *SELECT* queries. Defaults to 5000.
 
 ## Operations
 

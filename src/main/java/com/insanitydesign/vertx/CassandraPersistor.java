@@ -20,6 +20,7 @@ import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ProtocolOptions;
+import com.datastax.driver.core.QueryOptions;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
@@ -63,6 +64,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	private RetryPolicy retryPolicy = Policies.defaultRetryPolicy();
 	/** Define how to handle reconnection */
 	private ReconnectionPolicy reconnectionPolicy = Policies.defaultReconnectionPolicy();
+	/** The query options (e.g. fetch size) for this connection */
+	private QueryOptions queryOptions = new QueryOptions();
 
 	/**
 	 * Boot up the verticle and connect to the configured Cassandra cluster.
@@ -83,6 +86,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		setCompression(getOptionalStringConfig("compression", "NONE"));
 		setRetryPolicy(getOptionalStringConfig("retry", "default"));
 		setReconnectionPolicy(getOptionalObjectConfig("reconnection", new JsonObject("{}")));
+		getQueryOptions().setFetchSize(getOptionalIntConfig("fetchSize", QueryOptions.DEFAULT_FETCH_SIZE));
 
 		//
 		Cluster.Builder builder = Cluster.builder();
@@ -106,6 +110,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			if(getOptionalBooleanConfig("ssl", false)) {
 				builder = builder.withSSL();
 			}
+			//Query Options
+			builder.withQueryOptions(getQueryOptions());
 			//
 			setCluster(builder.build());
 
@@ -663,5 +669,13 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 				setReconnectionPolicy(policy, delay);
 			}
 		}
+	}
+	
+	public void setQueryOptions(QueryOptions queryOptions) {
+		this.queryOptions = queryOptions;
+	}
+	
+	public QueryOptions getQueryOptions() {
+		return queryOptions;
 	}
 }
