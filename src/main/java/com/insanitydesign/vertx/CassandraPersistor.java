@@ -30,11 +30,9 @@ import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
 import com.datastax.driver.core.policies.FallthroughRetryPolicy;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
-import com.datastax.driver.core.policies.TokenAwarePolicy;
 
 /**
  * The main persistor module and handler in one. Connects to Cassandra, registers and handles all actions from the
@@ -103,6 +101,10 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			// Credentials - don't store in class but only configure
 			if(this.config.getString("credentials") != null) {
 				builder = builder.withCredentials(this.config.getString("username"), this.config.getString("password"));
+			}
+			// SSL?
+			if(getOptionalBooleanConfig("ssl", false)) {
+				builder = builder.withSSL();
 			}
 			//
 			setCluster(builder.build());
