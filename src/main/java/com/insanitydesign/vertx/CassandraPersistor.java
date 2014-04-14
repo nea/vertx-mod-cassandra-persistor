@@ -82,6 +82,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		setKeyspace(getOptionalStringConfig("keyspace", "vertxpersistor"));
 		setCompression(getOptionalStringConfig("compression", "NONE"));
 		setRetryPolicy(getOptionalStringConfig("retry", "default"));
+		setReconnectionPolicy(getOptionalObjectConfig("reconnection", new JsonObject("{}")));
 
 		//
 		Cluster.Builder builder = Cluster.builder();
@@ -630,6 +631,27 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			default:
 				setReconnectionPolicy(Policies.defaultReconnectionPolicy());
 				break;
+		}
+	}
+	
+	/**
+	 * 
+	 * @param config
+	 */
+	public void setReconnectionPolicy(JsonObject config) {
+		String policy = config.getString("policy");
+		Integer delay = config.getInteger("delay");
+		Integer max = config.getInteger("max");
+		
+		//
+		if(policy == null || delay == null) {
+			return;
+		} else {
+			if(max != null) {
+				setReconnectionPolicy(policy, delay, max);
+			} else {
+				setReconnectionPolicy(policy, delay);
+			}
 		}
 	}
 }

@@ -54,6 +54,9 @@ public class CassandraPersistorTest extends TestVerticle {
 		initialize();
 		JsonObject config = new JsonObject();
 		config.putArray("hosts", new JsonArray().add("127.0.0.1"));
+		config.putString("compression", "SNAPPY");
+		config.putString("retry", "fallthrough");
+		config.putObject("reconnection", new JsonObject().putString("policy", "constant").putNumber("delay", 1000));
 
 		//
 		container.logger().info("[Cassandra Persistor Test] Starting test of module " + System.getProperty("vertx.modulename"));
