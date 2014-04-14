@@ -30,9 +30,11 @@ import com.datastax.driver.core.policies.DefaultRetryPolicy;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
 import com.datastax.driver.core.policies.FallthroughRetryPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.TokenAwarePolicy;
 
 /**
  * The main persistor module and handler in one. Connects to Cassandra, registers and handles all actions from the
@@ -61,7 +63,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
 	/** How to handle issues and retry based on what policy */
 	private RetryPolicy retryPolicy = Policies.defaultRetryPolicy();
-	/** */
+	/** Define how to handle reconnection */
 	private ReconnectionPolicy reconnectionPolicy = Policies.defaultReconnectionPolicy();
 
 	/**
@@ -98,6 +100,10 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			builder = builder.withRetryPolicy(getRetryPolicy());
 			// Reconnection
 			builder = builder.withReconnectionPolicy(getReconnectionPolicy());
+			// Credentials - don't store in class but only configure
+			if(this.config.getString("credentials") != null) {
+				builder = builder.withCredentials(this.config.getString("username"), this.config.getString("password"));
+			}
 			//
 			setCluster(builder.build());
 
@@ -581,7 +587,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * 
 	 * @param retryPolicy
 	 *            The name of the retry policy to use. Can be "downgrading" {@link DowngradingConsistencyRetryPolicy} or
-	 *            "fallthrough" {@link FallthroughRetryPolicy}. Everything else defaults to Policies.defaultRetryPolicy()
+	 *            "fallthrough" {@link FallthroughRetryPolicy}. Everything else defaults to
+	 *            Policies.defaultRetryPolicy()
 	 */
 	public void setRetryPolicy(String retryPolicy) {
 		switch(retryPolicy) {
@@ -633,8 +640,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 				break;
 		}
 	}
-	
+
 	/**
+	 * Parse a Reconnection Json Config and identify how to set parameters
 	 * 
 	 * @param config
 	 */
@@ -642,7 +650,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		String policy = config.getString("policy");
 		Integer delay = config.getInteger("delay");
 		Integer max = config.getInteger("max");
-		
+
 		//
 		if(policy == null || delay == null) {
 			return;
