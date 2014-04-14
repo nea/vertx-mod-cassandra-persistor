@@ -1,5 +1,5 @@
 # Vert.x Cassandra Persistor [![Build Status](https://travis-ci.org/nea/vertx-mod-cassandra-persistor.svg?branch=master)](https://travis-ci.org/nea/vertx-mod-cassandra-persistor)
-This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.0][3].
+This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.0][3] (*defaults and characteristics from the driver are implicitly used*).
 
 It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for highest performance but straight-forward integration with Cassandra. 
 
@@ -9,12 +9,12 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.3.0
+    * Added additional configuration options (e.g. compression)
 * 0.2.1
-    * Changed return format for `prepared`
+    * Changed return format of `prepared`
 * 0.2.0
     * Added support for PreparedStatements
-* 0.1.1
-    * Changed group-id and default module address
 
 For a full version history go [here][5].
 
@@ -25,10 +25,23 @@ This Persistor has only been developed and tested with Cassandra 2.x/CQL3. To us
 The Vert.x Cassandra Persistor takes the following configuration
 
     {
-        "address": <address>,
-        "hosts": [<hosts>],
-        "port": <port>,
-        "keyspace": <keyspace>
+        "address": <string>,
+        "hosts": [<string>],
+        "port": <int>,
+        "keyspace": <string>,
+        "compression": "SNAPPY" | "LZ4",
+        "retry": "fallthrough" | "downgrading",
+        "reconnection": {
+            "policy": "constant" | "exponential",
+            "delay": <int>,
+            "max": <int>
+        },
+        "credentials": {
+            "username": <string>,
+            "password: <string>
+        },
+        "ssl": <boolean>,
+        "fetchSize": <int>
     }
 
 An exemplary configuration could look like
@@ -45,6 +58,12 @@ An exemplary configuration could look like
 * `hosts` *optional* A string array of host IPs the module connects to as contact points. Defaults to `127.0.0.1`
 * `port` *optional* The port (number) the Cassandra instances are running on. All hosts must have Cassandra running on the same port. Defaults to `9042`
 * `keyspace` *optional* The Cassandra keyspace to use. Defaults to `vertxpersistor`. 
+* `compression` *optional* Set the cluster connections compression to `SNAPPY` or `LZ4`. Defaults to `NONE`
+* `retry` *optional* Set the cluster connections retry policy to `DowngradingConsistencyRetryPolicy` or `FallthroughRetryPolicy`. Defaults to `Policies.defaultRetryPolicy()`. See the drivers [JavaDoc][6] for more information.
+* `reconnection` *optional* Set the cluster connections reconnection policy to `ConstantReconnectionPolicy` or `ExponentialReconnectionPolicy` (*exponential* requires `delay` and `max`). Defaults to `ConstantReconnectionPolicy`. See the drivers [JavaDoc][7] for more information.
+* `credentials` *optional* A JsonObject containing the *username* and *password* to authenticate at the Cassandra hosts. Defaults to no credentials, expecting an *AllowAll* rule at the cluster.
+* `ssl` *optional* Connect via SSL or not. Defaults to not.
+* `fetchSize` *optional* The default fetch size for *SELECT* queries. Defaults to 5000.
 
 ## Operations
 
@@ -135,3 +154,5 @@ or in case of errors
   [3]: http://www.datastax.com/documentation/developer/java-driver/2.0
   [4]: https://github.com/vert-x/mod-mongo-persistor
   [5]: https://github.com/nea/vertx-mod-cassandra-persistor/wiki/Version-History
+  [6]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/Policies.html#defaultRetryPolicy()
+  [7]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/Policies.html#defaultReconnectionPolicy()
