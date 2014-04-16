@@ -15,7 +15,8 @@ CREATE TABLE fulltable(
     valuemap map<varchar, varchar>,
     date timestamp,
     isValid boolean,
-    number int
+    number int,
+    data blob
     );
 
 INSERT INTO fulltable (id, key, value, valueset) VALUES (756716f7-2e54-4715-9f00-91dcbea6cf50, 'Key 1', 'Hello', {'Set A', 'Set B'});

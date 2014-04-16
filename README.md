@@ -9,12 +9,12 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.3.1
+    * Fixed CQL3 Blob data ByteBuffer handling
 * 0.3.0
     * Added additional configuration options (e.g. compression)
 * 0.2.1
     * Changed return format of `prepared`
-* 0.2.0
-    * Added support for PreparedStatements
 
 For a full version history go [here][5].
 

@@ -1,5 +1,6 @@
 package com.insanitydesign.vertx;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -110,7 +111,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			if(getOptionalBooleanConfig("ssl", false)) {
 				builder = builder.withSSL();
 			}
-			//Query Options
+			// Query Options
 			builder.withQueryOptions(getQueryOptions());
 			//
 			setCluster(builder.build());
@@ -360,7 +361,6 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			if(valueArray[j] instanceof String) {
 				try {
 					valueArray[j] = UUID.fromString((String) valueArray[j]);
-					continue;
 
 				} catch(Exception e) {
 				}
@@ -398,6 +398,11 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		} else if(columnValue instanceof UUID) {
 			retVal.putString(columnName, ((UUID) columnValue).toString());
+
+		} else if(columnValue instanceof ByteBuffer) {
+			byte[] retValBuffer = new byte[((ByteBuffer) columnValue).remaining()];
+			((ByteBuffer) columnValue).get(retValBuffer);
+			addRow(columnName, retValBuffer, retVal);
 
 		} else if(columnValue instanceof byte[]) {
 			retVal.putBinary(columnName, (byte[]) columnValue);
@@ -442,38 +447,58 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	protected JsonArray addCollection(Collection<?> columnValue, JsonArray retVal) {
 		//
 		for(Object collectionValue : columnValue) {
-			//
-			if(collectionValue instanceof Number) {
-				retVal.addNumber((Number) collectionValue);
-
-			} else if(collectionValue instanceof String) {
-				retVal.addString((String) collectionValue);
-
-			} else if(collectionValue instanceof Boolean) {
-				retVal.addBoolean((Boolean) collectionValue);
-
-			} else if(columnValue instanceof Date) {
-				retVal.addString(((Date) columnValue).toString());
-
-			} else if(collectionValue instanceof UUID) {
-				retVal.addString(((UUID) collectionValue).toString());
-
-			} else if(collectionValue instanceof byte[]) {
-				retVal.addBinary((byte[]) collectionValue);
-
-			} else if(collectionValue instanceof Collection<?>) {
-				retVal.addArray(addCollection((Collection<?>) collectionValue, new JsonArray()));
-
-			} else {
-				// If nothing works, try to add the object directly but catch if not
-				try {
-					retVal.add(columnValue);
-				} catch(Exception e) {
-				}
-			}
+			retVal = addToArray(collectionValue, retVal);
 		}
 
 		//
+		return retVal;
+	}
+
+	/**
+	 * Add the given value to the given JsonArray by identifying its type and according action on JsonArray.
+	 * 
+	 * @param value
+	 *            The object to identify and process
+	 * @param retVal
+	 *            The JsonArray to fill. Will be returned.
+	 * @return retVal
+	 */
+	protected JsonArray addToArray(Object value, JsonArray retVal) {
+		//
+		if(value instanceof Number) {
+			retVal.addNumber((Number) value);
+
+		} else if(value instanceof String) {
+			retVal.addString((String) value);
+
+		} else if(value instanceof Boolean) {
+			retVal.addBoolean((Boolean) value);
+
+		} else if(value instanceof Date) {
+			retVal.addString(((Date) value).toString());
+
+		} else if(value instanceof UUID) {
+			retVal.addString(((UUID) value).toString());
+
+		} else if(value instanceof ByteBuffer) {
+			byte[] retValBuffer = new byte[((ByteBuffer) value).remaining()];
+			((ByteBuffer) value).get(retValBuffer);
+			addToArray(retValBuffer, retVal);
+
+		} else if(value instanceof byte[]) {
+			retVal.addBinary((byte[]) value);
+
+		} else if(value instanceof Collection<?>) {
+			retVal.addArray(addCollection((Collection<?>) value, new JsonArray()));
+
+		} else {
+			// If nothing works, try to add the object directly but catch if not
+			try {
+				retVal.add(value);
+			} catch(Exception e) {
+			}
+		}
+
 		return retVal;
 	}
 
@@ -670,11 +695,11 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			}
 		}
 	}
-	
+
 	public void setQueryOptions(QueryOptions queryOptions) {
 		this.queryOptions = queryOptions;
 	}
-	
+
 	public QueryOptions getQueryOptions() {
 		return queryOptions;
 	}

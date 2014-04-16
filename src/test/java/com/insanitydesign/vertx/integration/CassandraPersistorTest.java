@@ -7,6 +7,10 @@ import static org.vertx.testtools.VertxAssert.assertThat;
 import static org.vertx.testtools.VertxAssert.assertTrue;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
+import java.nio.ByteBuffer;
+
+import javax.xml.bind.DatatypeConverter;
+
 import org.cassandraunit.CQLDataLoader;
 import org.cassandraunit.dataset.cql.ClassPathCQLDataSet;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
@@ -227,7 +231,9 @@ public class CassandraPersistorTest extends TestVerticle {
 		//
 		JsonObject insert = new JsonObject();
 		insert.putString("action", "raw");
-		insert.putString("statement", "INSERT INTO vertxpersistor.fulltable (id, key, value) VALUES(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, 'Unit', 'Test')");
+		String data = "Testing";
+		String query = "INSERT INTO vertxpersistor.fulltable (id, key, value, data) VALUES(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, 'Unit', 'Test', 0x" + DatatypeConverter.printHexBinary(data.getBytes()) + ")";
+		insert.putString("statement", query);
 
 		//
 		vertx.eventBus().send("vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
@@ -264,6 +270,8 @@ public class CassandraPersistorTest extends TestVerticle {
 								JsonObject result = (JsonObject)reply.body().get(0);
 								assertEquals("Unit", result.getString("key"));
 								assertEquals("Test", result.getString("value"));
+								ByteBuffer data = ByteBuffer.wrap(result.getBinary("data"));
+								assertEquals("Testing", new String(data.array()));
 
 							} catch(Exception e) {
 							}
