@@ -155,7 +155,7 @@ or in case of errors
     }
 
 ## Personal Note
-*I don't know if this is very useful or already developed and published by others but I used it in private to test some ideas around Vert.x and Cassandra. As I was not able to find something similar very quickly I created this project. I hope this can be useful to you... with all its Bugs and Issues ;)* 
+*I don't know if this is very useful or already developed and published by others but I used it in private to test some ideas around Vert.x and Cassandra. As I was not able to find something similar very quickly I created this project. I hope this can be useful to you... with all its Bugs and Issues ;) If you like it you can give me a shout at [INsanityDesign][8].* 
 
 
   [1]: http://vertx.io
@@ -165,3 +165,4 @@ or in case of errors
   [5]: https://github.com/nea/vertx-mod-cassandra-persistor/wiki/Version-History
   [6]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/Policies.html#defaultRetryPolicy()
   [7]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/Policies.html#defaultReconnectionPolicy()
+  [8]: http://www.insanitydesign.com/wp/
