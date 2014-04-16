@@ -21,6 +21,15 @@ For a full version history go [here][5].
 ## Dependencies
 This Persistor has only been developed and tested with Cassandra 2.x/CQL3. To use it you of course have to have a Cassandra instance running and accessible through the network, where this Module is running.
 
+### Repository
+The module is available through the central Maven Repository
+
+    <dependency>
+        <groupId>com.insanitydesign</groupId>
+        <artifactId>vertx-mod-cassandra-persistor</artifactId>
+        <version>0.3.1</version>
+    </dependency>
+
 ## Configuration
 The Vert.x Cassandra Persistor takes the following configuration
 
