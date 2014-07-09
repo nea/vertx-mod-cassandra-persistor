@@ -8,6 +8,9 @@ import static org.vertx.testtools.VertxAssert.assertTrue;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
 import java.nio.ByteBuffer;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -359,20 +362,27 @@ public class CassandraPersistorTest extends TestVerticle {
 	@Test
 	public void testPreparedInsert() {
 		//
+		Format format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		
+		//
 		JsonObject insert = new JsonObject();
 		insert.putString("action", "prepared");
-		insert.putString("statement", "INSERT INTO vertxpersistor.fulltable (id, key, value, number) VALUES(?, ?, ?, ?)");
+		insert.putString("statement", "INSERT INTO vertxpersistor.fulltable (id, key, value, number, date) VALUES(?, ?, ?, ?, ?)");
 		//
 		JsonArray values1 = new JsonArray();
 		values1.addString("aaaaaaaa-2e54-4715-9f00-91dcbea6cf50");
 		values1.addString("Unit1");
 		values1.addString("Test1");
 		values1.addNumber(2014);
+		values1.addString(format.format(new Date()));
+		//
 		JsonArray values2 = new JsonArray();
 		values2.addString("bbbbbbbb-2e54-4715-9f00-91dcbea6cf50");
 		values2.addString("Unit2");
 		values2.addString("Test2");
 		values2.addNumber(2015);
+		values2.addString(format.format(new Date()));
+		//
 		JsonArray values = new JsonArray();
 		values.addArray(values1);
 		values.addArray(values2);

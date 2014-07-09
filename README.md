@@ -9,12 +9,12 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.3.2
+    * Fixed/Added string date handling for prepared statements
 * 0.3.1
     * Fixed CQL3 Blob data ByteBuffer handling
 * 0.3.0
     * Added additional configuration options (e.g. compression)
-* 0.2.1
-    * Changed return format of `prepared`
 
 For a full version history go [here][5].
 
@@ -50,7 +50,8 @@ The Vert.x Cassandra Persistor takes the following configuration
             "password: <string>
         },
         "ssl": <boolean>,
-        "fetchSize": <int>
+        "fetchSize": <int>,
+        "dateFormat": <string>
     }
 
 An exemplary configuration could look like
@@ -73,6 +74,7 @@ An exemplary configuration could look like
 * `credentials` *optional* A JsonObject containing the *username* and *password* to authenticate at the Cassandra hosts. Defaults to no credentials, expecting an *AllowAll* rule at the cluster.
 * `ssl` *optional* Connect via SSL or not. Defaults to not.
 * `fetchSize` *optional* The default fetch size for *SELECT* queries. Defaults to 5000.
+* `dateFormat` *optional* The default Date pattern used to convert string dates to `Date` instances. Defaults to `dd-MM-yyyy HH:mm:ss`.
 
 ## Operations
 

@@ -1,6 +1,7 @@
 package com.insanitydesign.vertx;
 
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
@@ -68,6 +69,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	/** The query options (e.g. fetch size) for this connection */
 	private QueryOptions queryOptions = new QueryOptions();
 
+	/** The formatter (default pattern: dd-MM-yyyy HH:mm:ss) used to convert String dates to Date instances */
+	private SimpleDateFormat dateFormatter;
+
 	/**
 	 * Boot up the verticle and connect to the configured Cassandra cluster.
 	 */
@@ -88,6 +92,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		setRetryPolicy(getOptionalStringConfig("retry", "default"));
 		setReconnectionPolicy(getOptionalObjectConfig("reconnection", new JsonObject("{}")));
 		getQueryOptions().setFetchSize(getOptionalIntConfig("fetchSize", QueryOptions.DEFAULT_FETCH_SIZE));
+		setDateFormatter(new SimpleDateFormat(getOptionalStringConfig("dateFormat", "dd-MM-yyyy HH:mm:ss")));
 
 		//
 		Cluster.Builder builder = Cluster.builder();
@@ -183,8 +188,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
-	 * Processes a Cassandra CQL3 prepared statement and returns the resultset as JsonArray of JsonArrays if a SELECT
-	 * query was fired. Just error or ok in the case of altering statements.
+	 * Processes a Cassandra CQL3 prepared statement and returns the resultset as JsonArray if a SELECT query was fired.
+	 * Just error or ok in the case of altering statements.
 	 * 
 	 * @param message
 	 */
@@ -347,11 +352,11 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	}
 
 	/**
-	 * Parses the given array of Objects to identify UUID strings to replace them with the native object. Nothing else
-	 * is changed.
+	 * Parses the given array of Objects to identify UUID and Date strings to replace them with the native object.
+	 * Nothing else is changed.
 	 * 
 	 * @param valueArray
-	 *            The array to look for UUIDs
+	 *            The array to look for UUIDs and Dates
 	 * @return
 	 */
 	protected Object[] parseArray(Object[] valueArray) {
@@ -361,7 +366,13 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			if(valueArray[j] instanceof String) {
 				try {
 					valueArray[j] = UUID.fromString((String) valueArray[j]);
+					continue;
+				} catch(Exception e) {
+				}
 
+				try {
+					valueArray[j] = dateFormatter.parse((String) valueArray[j]);
+					continue;
 				} catch(Exception e) {
 				}
 			}
@@ -510,7 +521,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * @param e
 	 *            The exception to parse and add
 	 */
-	protected void sendError(Message<JsonObject> message, Exception e) {
+	public void sendError(Message<JsonObject> message, Exception e) {
 		sendError(message, "[Cassandra Persistor] " + e.getMessage(), e);
 	}
 
@@ -702,5 +713,13 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 	public QueryOptions getQueryOptions() {
 		return queryOptions;
+	}
+
+	public void setDateFormatter(SimpleDateFormat dateFormatter) {
+		this.dateFormatter = dateFormatter;
+	}
+
+	public SimpleDateFormat getDateFormatter() {
+		return dateFormatter;
 	}
 }
