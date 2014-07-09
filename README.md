@@ -27,7 +27,7 @@ The module is available through the central Maven Repository
     <dependency>
         <groupId>com.insanitydesign</groupId>
         <artifactId>vertx-mod-cassandra-persistor</artifactId>
-        <version>0.3.1</version>
+        <version>0.3.2</version>
     </dependency>
 
 ## Configuration
