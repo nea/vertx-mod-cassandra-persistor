@@ -9,6 +9,8 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.3.3
+    * Added caching of prepared statements and prepare action
 * 0.3.2
     * Fixed/Added string date handling for prepared statements
 * 0.3.1
@@ -27,7 +29,7 @@ The module is available through the central Maven Repository
     <dependency>
         <groupId>com.insanitydesign</groupId>
         <artifactId>vertx-mod-cassandra-persistor</artifactId>
-        <version>0.3.2</version>
+        <version>0.3.3</version>
     </dependency>
 
 ## Configuration
@@ -106,13 +108,13 @@ or
 where `statement` is preferred over `statements`.
     
 #### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra.
+`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra.  
 `statements` A JsonArray of Cassandra Query Language version 3 (CQL3) compliant queries that are channeled through to the driver and Cassandra. Only `UPDATE`, `INSERT` and `DELETE` are allowed.
 
 *Note: Do not forget the keyspace (e.g. `FROM keyspace.table`), even if configured, as the raw statements are not altered in any way! And use `'` instead of `"` for strings.*
 
 #### Returns
-The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given). 
+The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given).
 *Note: Value types are not fully interpreted but generally covered as numbers, strings or collections. Complex Types are not handled at the moment!*
 
 ### Prepared
@@ -135,12 +137,45 @@ An example could look like
     }
     
 #### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant prepared statement query that is channeled through to the driver and Cassandra. Only *SELECT*, *UPDATE*, *INSERT* and *DELETE* are allowed. 
+`statement` A Cassandra Query Language version 3 (CQL3) compliant prepared statement query that is channeled through to the driver and Cassandra. Only *SELECT*, *UPDATE*, *INSERT* and *DELETE* are allowed.  
 `values` A JsonArray of JsonArrays with the values. Every value list will create its bindings and be executed in a batched statement (if not a *SELECT* query).
 
 #### Returns
 *Note: Only for `SELECT`*
 The `prepared` action returns a `JsonArray` of `JsonObject`s in the format `columnName:columnValue` (if any result is given) combining all results from all prepared invokes.
+
+### Prepare
+
+    {
+        "action": "prepare",
+        "statement": <cql3Statement> | "statements": [<cql3Statement>, ...]
+    }
+        
+An example could look like
+
+    {
+        "action": "prepare",
+        "statement": "INSERT INTO superkeyspace.tablewithinfos (id, value) VALUES(?, ?)"
+    }
+
+or
+
+    {
+        "action": "prepare",
+        "statements": [
+            "INSERT INTO superkeyspace.table (id, value) VALUES(?, ?)",
+            "INSERT INTO superkeyspace.anothertable (id, value) VALUES(?, ?)"
+        ]
+    }
+    
+where `statement` is preferred over `statements`.
+
+#### Fields
+`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra.  
+`statements` A JsonArray of Cassandra Query Language version 3 (CQL3) compliant queries that are channeled through to the driver and Cassandra.
+
+#### Returns
+Response as detailed in General Responses
 
 ## General Responses
 In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. It looks like
