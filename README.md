@@ -9,7 +9,9 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
-* 0.3.3
+* 0.3.4
+	* Updated Vert.x and Cassandra Driver version
+* 0.3.3 (*thanks to [andyjduncan](https://github.com/andyjduncan)*)
     * Added caching of prepared statements and prepare action
 * 0.3.2
     * Fixed/Added string date handling for prepared statements
@@ -29,7 +31,7 @@ The module is available through the central Maven Repository
     <dependency>
         <groupId>com.insanitydesign</groupId>
         <artifactId>vertx-mod-cassandra-persistor</artifactId>
-        <version>0.3.3</version>
+        <version>0.3.4</version>
     </dependency>
 
 ## Configuration

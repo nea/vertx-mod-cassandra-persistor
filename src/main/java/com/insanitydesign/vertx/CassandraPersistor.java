@@ -68,7 +68,11 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 	/** The formatter (default pattern: dd-MM-yyyy HH:mm:ss) used to convert String dates to Date instances */
 	private SimpleDateFormat dateFormatter;
+	
+	/** Only supporting Cassandra > 2 */
+	private static final int PROTOCOL_VERSION = 2;
 
+	/** */
     private Map<String, PreparedStatement> preparedStatementCache = new HashMap<>();
 
 	/**
@@ -117,6 +121,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			}
 			// Query Options
 			builder.withQueryOptions(getQueryOptions());
+			//Only supporting Cassandra > 2
+			builder.withProtocolVersion(PROTOCOL_VERSION);
 			//
 			setCluster(builder.build());
 
@@ -243,6 +249,11 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		}
 	}
 
+	/**
+	 * From a retrieved message prepare the given arguments to prepared statements
+	 * 
+	 * @param message
+	 */
     private void prepare(Message<JsonObject> message) {
         JsonObject preparedMessage = message.body();
 
@@ -256,12 +267,23 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
         sendOK(message);
     }
 
+    /**
+     * Add a set of given statements to the prepared statement cache
+     * 
+     * @param statements
+     */
     private void prepareAll(List<String> statements) {
         for (String statement: statements) {
             prepareStatement(statement);
         }
     }
 
+    /**
+     * Return a prepared statement from the cache or create a new cache entry and return it
+     * 
+     * @param statement
+     * @return
+     */
     private PreparedStatement getPreparedStatement(String statement) {
         if (preparedStatementCache.containsKey(statement)) {
             return preparedStatementCache.get(statement);
@@ -269,6 +291,12 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
         return prepareStatement(statement);
     }
 
+    /**
+     * Add a given statement to the prepapred statement cache
+     * 
+     * @param statement
+     * @return
+     */
     private PreparedStatement prepareStatement(String statement) {
         PreparedStatement preparedStatement = getSession().prepare(statement);
         preparedStatementCache.put(statement, preparedStatement);
@@ -372,7 +400,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 				// Read the column bytes unsafe and operate on the deserialized object instead of iterating over the
 				// type of the definitions
-				Object columnValue = rowColumnDefinitions.getType(i).deserialize(row.getBytesUnsafe(i));
+				Object columnValue = rowColumnDefinitions.getType(i).deserialize(row.getBytesUnsafe(i), PROTOCOL_VERSION);
 
 				// Parse the returning object to a supported type
 				retVal = addRow(rowColumnDefinitions.getName(i), columnValue, retVal);
