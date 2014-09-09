@@ -2,11 +2,8 @@ package com.insanitydesign.vertx;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Handler;
@@ -71,6 +68,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 	/** The formatter (default pattern: dd-MM-yyyy HH:mm:ss) used to convert String dates to Date instances */
 	private SimpleDateFormat dateFormatter;
+
+    private Map<String, PreparedStatement> preparedStatementCache = new HashMap<>();
 
 	/**
 	 * Boot up the verticle and connect to the configured Cassandra cluster.
@@ -177,6 +176,10 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 					prepared(message);
 					break;
 
+                case "prepare":
+                    prepare(message);
+                    break;
+
 				default:
 					sendError(message, "[Cassandra Persistor] Action '" + action + "' unknown!");
 			}
@@ -201,10 +204,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		String statement = preparedMessage.getString("statement");
 		JsonArray values = preparedMessage.getArray("values");
 
-		//
-		PreparedStatement preparedStmt = getSession().prepare(statement);
+        PreparedStatement preparedStmt = getPreparedStatement(statement);
 
-		//
+        //
 		BatchStatement query = new BatchStatement();
 		//
 		for(int i = 0; i < values.size(); i++) {
@@ -241,7 +243,40 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		}
 	}
 
-	/**
+    private void prepare(Message<JsonObject> message) {
+        JsonObject preparedMessage = message.body();
+
+        if (preparedMessage.containsField("statement")) {
+            String statement = preparedMessage.getString("statement");
+            prepareStatement(statement);
+        } else {
+            prepareAll(preparedMessage.getArray("statements").toList());
+        }
+
+        sendOK(message);
+    }
+
+    private void prepareAll(List<String> statements) {
+        for (String statement: statements) {
+            prepareStatement(statement);
+        }
+    }
+
+    private PreparedStatement getPreparedStatement(String statement) {
+        if (preparedStatementCache.containsKey(statement)) {
+            return preparedStatementCache.get(statement);
+        }
+        return prepareStatement(statement);
+    }
+
+    private PreparedStatement prepareStatement(String statement) {
+        PreparedStatement preparedStatement = getSession().prepare(statement);
+        preparedStatementCache.put(statement, preparedStatement);
+
+        return preparedStatement;
+    }
+
+    /**
 	 * Processes raw Cassandra CQL3 statement(s) and returns the resultset as JsonArray (if any)
 	 * 
 	 * @param message

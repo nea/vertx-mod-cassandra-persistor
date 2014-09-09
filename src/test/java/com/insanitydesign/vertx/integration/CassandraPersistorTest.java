@@ -484,4 +484,60 @@ public class CassandraPersistorTest extends TestVerticle {
 			}
 		});
 	}
+
+    @Test
+    public void testPrepareSingleStatement() {
+        JsonObject prepare = new JsonObject();
+        prepare.putString("action", "prepare");
+        prepare.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
+
+        vertx.eventBus().send("vertx.cassandra.persistor", prepare, new Handler<Message<JsonObject>>() {
+            @Override
+            public void handle(Message<JsonObject> reply) {
+                //
+                try {
+                    container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+                    // Tests
+                    assertNotNull(reply);
+                    assertNotNull(reply.body());
+                    assertEquals("ok", reply.body().getString("status"));
+
+                    //
+                    testComplete();
+
+                } catch(Exception e) {
+                }
+            }
+        });
+    }
+
+    @Test
+    public void testPrepareMultipleStatements() {
+        JsonObject prepare = new JsonObject();
+        prepare.putString("action", "prepare");
+        JsonArray statements = new JsonArray();
+        statements.addString("SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
+        prepare.putArray("statements", statements);
+
+        vertx.eventBus().send("vertx.cassandra.persistor", prepare, new Handler<Message<JsonObject>>() {
+            @Override
+            public void handle(Message<JsonObject> reply) {
+                //
+                try {
+                    container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+                    // Tests
+                    assertNotNull(reply);
+                    assertNotNull(reply.body());
+                    assertEquals("ok", reply.body().getString("status"));
+
+                    //
+                    testComplete();
+
+                } catch(Exception e) {
+                }
+            }
+        });
+    }
 }
