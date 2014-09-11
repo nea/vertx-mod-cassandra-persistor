@@ -401,7 +401,7 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply);
 					assertNotNull(reply.body());
 					assertEquals("ok", reply.body().getString("status"));
-					
+
 					//
 					JsonObject select = new JsonObject();
 					select.putString("action", "raw");
@@ -418,7 +418,7 @@ public class CassandraPersistorTest extends TestVerticle {
 								// Tests
 								assertNotNull(reply);
 								assertNotNull(reply.body());
-								assertEquals(2, reply.body().size());								
+								assertEquals(2, reply.body().size());
 								//
 								for(Object result : reply.body()) {
 									assertThat(result, instanceOf(JsonObject.class));
@@ -430,7 +430,7 @@ public class CassandraPersistorTest extends TestVerticle {
 
 							} catch(Exception e) {
 							}
-							
+
 							//
 							testComplete();
 						}
@@ -513,7 +513,7 @@ public class CassandraPersistorTest extends TestVerticle {
     }
 
     @Test
-    public void testPrepareMultipleStatements() {
+     public void testPrepareMultipleStatements() {
         JsonObject prepare = new JsonObject();
         prepare.putString("action", "prepare");
         JsonArray statements = new JsonArray();
@@ -534,6 +534,138 @@ public class CassandraPersistorTest extends TestVerticle {
 
                     //
                     testComplete();
+
+                } catch(Exception e) {
+                }
+            }
+        });
+    }
+
+    @Test
+    public void testPreparedMultipleInsertStatements() {
+        //
+        Format format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        //
+        JsonObject insert = new JsonObject();
+        JsonArray statements = new JsonArray();
+        JsonArray values = new JsonArray();
+        //
+        statements.addString("INSERT INTO vertxpersistor.fulltable (id, key, value, number, date) VALUES(?, ?, ?, ?, ?)");
+        //
+        JsonArray v1 = new JsonArray();
+        v1.addString("aaaaaaaa-2e54-4715-9f00-91dcbea6cf50");
+        v1.addString("Unit1");
+        v1.addString("Test1");
+        v1.addNumber(2014);
+        v1.addString(format.format(new Date()));
+        //
+        JsonArray v2 = new JsonArray();
+        v2.addString("bbbbbbbb-2e54-4715-9f00-91dcbea6cf50");
+        v2.addString("Unit2");
+        v2.addString("Test2");
+        v2.addNumber(2015);
+        v2.addString(format.format(new Date()));
+        //
+        JsonArray valueSubset = new JsonArray();
+        valueSubset.addArray(v1);
+        valueSubset.addArray(v2);
+        values.addArray(valueSubset);
+
+        //
+        statements.addString("INSERT INTO vertxpersistor.emptytable (id, key, value) VALUES (?, ?, ?)");
+        //
+        JsonArray v3 = new JsonArray();
+        v3.addString("cccccccc-2e54-4715-9f00-91dcbea6cf50");
+        v3.addString("Unit3");
+        v3.addString("Test3");
+        //
+        valueSubset = new JsonArray();
+        valueSubset.addArray(v3);
+        values.addArray(valueSubset);
+
+        //
+        insert.putString("action", "prepared");
+        insert.putArray("statements", statements);
+        insert.putArray("values", values);
+
+        //
+        vertx.eventBus().send("vertx.cassandra.persistor", insert, new Handler<Message<JsonObject>>() {
+            @Override
+            public void handle(Message<JsonObject> reply) {
+                //
+                try {
+                    container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+                    // Tests
+                    assertNotNull(reply);
+                    assertNotNull(reply.body());
+                    assertEquals("ok", reply.body().getString("status"));
+
+                    //
+                    JsonObject select = new JsonObject();
+                    select.putString("action", "raw");
+                    select.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id IN(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, bbbbbbbb-2e54-4715-9f00-91dcbea6cf50)");
+
+                    //
+                    vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
+                        @Override
+                        public void handle(Message<JsonArray> reply) {
+                            //
+                            try {
+                                container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+                                // Tests
+                                assertNotNull(reply);
+                                assertNotNull(reply.body());
+                                assertEquals(2, reply.body().size());
+                                //
+                                for(Object result : reply.body()) {
+                                    assertThat(result, instanceOf(JsonObject.class));
+                                    //
+                                    JsonObject resultRow = (JsonObject)result;
+                                    assertTrue(resultRow.getString("key").startsWith("Unit"));
+                                    assertTrue(resultRow.getString("value").startsWith("Test"));
+                                }
+
+                                //
+                                JsonObject select = new JsonObject();
+                                select.putString("action", "raw");
+                                select.putString("statement", "SELECT * FROM vertxpersistor.emptytable WHERE id IN(cccccccc-2e54-4715-9f00-91dcbea6cf50)");
+
+                                //
+                                vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
+                                    @Override
+                                    public void handle(Message<JsonArray> reply) {
+                                        //
+                                        try {
+                                            container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+
+                                            // Tests
+                                            assertNotNull(reply);
+                                            assertNotNull(reply.body());
+                                            assertEquals(1, reply.body().size());
+                                            //
+                                            for(Object result : reply.body()) {
+                                                assertThat(result, instanceOf(JsonObject.class));
+                                                //
+                                                JsonObject resultRow = (JsonObject)result;
+                                                assertTrue(resultRow.getString("key").startsWith("Unit"));
+                                                assertTrue(resultRow.getString("value").startsWith("Test"));
+                                            }
+
+                                        } catch(Exception e) {
+                                        }
+
+                                        //
+                                        testComplete();
+                                    }
+                                });
+
+                            } catch(Exception e) {
+                            }
+                        }
+                    });
 
                 } catch(Exception e) {
                 }

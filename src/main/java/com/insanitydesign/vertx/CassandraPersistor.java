@@ -203,28 +203,52 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	 * @param message
 	 */
 	protected void prepared(Message<JsonObject> message) {
+        //
+        BatchStatement query = new BatchStatement();
 		//
 		JsonObject preparedMessage = message.body();
 
 		//
 		String statement = preparedMessage.getString("statement");
-		JsonArray values = preparedMessage.getArray("values");
+        JsonArray statements;
+        if (statement == null) {
+            statements = preparedMessage.getArray("statements");
+            JsonArray values = preparedMessage.getArray("values");
 
-        PreparedStatement preparedStmt = getPreparedStatement(statement);
+            // If a prepared command is made up of multiple statements we must do the following
+            // Create each PreparedStatement (either assume or check that they are DML statements)
+            for(int i = 0; i < statements.size(); i++) {
+                // Note: There is no check that the statements are DML -- users need to be careful
+                PreparedStatement preparedStatement = getPreparedStatement((String) statements.get(i));
+                // Assume the valueList as [[statement1 valueSubset1, statement1 valueSubset2],[statement2 valueSubset1]]
+                JsonArray valueSubset = values.get(i);
 
-        //
-		BatchStatement query = new BatchStatement();
+                // Bind the values to the appropriate PreparedStatement
+                for(int j = 0; j < valueSubset.size(); j++) {
+                    JsonArray v = valueSubset.get(j);
+
+                    BoundStatement boundStatement = preparedStatement.bind();
+                    // Add the boundStatements to the BatchStatement
+                    query.add(boundStatement.bind(parseArray(v.toArray())));
+                }
+            }
+        } else {
+            JsonArray values = preparedMessage.getArray("values");
+
+            PreparedStatement preparedStmt = getPreparedStatement(statement);
+
+            //
+            for (int i = 0; i < values.size(); i++) {
+                //
+                JsonArray valueList = values.get(i);
+                //
+                BoundStatement boundStmt = preparedStmt.bind();
+                query.add(boundStmt.bind(parseArray(valueList.toArray())));
+            }
+        }
+
 		//
-		for(int i = 0; i < values.size(); i++) {
-			//
-			JsonArray valueList = values.get(i);
-			//
-			BoundStatement boundStmt = preparedStmt.bind();
-			query.add(boundStmt.bind(parseArray(valueList.toArray())));
-		}
-
-		//
-		if(statement.trim().toLowerCase().startsWith("select")) {
+		if(statement != null && statement.trim().toLowerCase().startsWith("select")) {
 			//
 			JsonArray retVals = new JsonArray();
 			//
