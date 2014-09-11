@@ -172,6 +172,26 @@ or
     
 where `statement` is preferred over `statements`.
 
+#### Multiple Prepared Statements
+
+DML statements can be batched using the following exemplary format.
+Note: There is no check to ensure the statements are DML.
+Note: Theoretically, any set of DML statements can be executed using this model, but INSERT is the only tested.
+
+    {
+       "action": "prepare",
+       "statements": [
+          "INSERT INTO superkeyspace.tablewithinfos (id, value) VALUES (?, ?)",
+          "INSERT INTO superkeyspace.othertablewithinfos (id, key, value) VALUES (?, ?, ?)"
+       ],
+       "values": [
+          [["000", "value0"], ["001", "value1"]],
+          [["010", "key1", "value3"], ["011", "key2", "value4"], ["012", "key3", "value5"]]
+       ]
+    }
+
+In the previous example, 2 entries are inserted into tablewithinfos, and 3 entries are inserted into othertablewithinfos.
+
 #### Fields
 `statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra.  
 `statements` A JsonArray of Cassandra Query Language version 3 (CQL3) compliant queries that are channeled through to the driver and Cassandra.
