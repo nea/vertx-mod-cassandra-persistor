@@ -6,7 +6,7 @@
 	<groupId>com.insanitydesign</groupId>
 	<artifactId>vertx-mod-cassandra-persistor</artifactId>
 	<packaging>jar</packaging>
-	<version>0.3.4</version>
+	<version>0.3.5</version>
 	<name>Vert.x Cassandra Persistor Module</name>
 	<url>https://github.com/nea/vertx-mod-cassandra-persistor</url>
 	<description>This very simple Vert.x module allows to store and retrieve data from a Cassandra instance or cluster. It uses the DataStax Java Driver 2.0.</description>
@@ -56,7 +56,7 @@
 		<maven.compiler.plugin.version>3.0</maven.compiler.plugin.version>
 		<maven.resources.plugin.version>2.6</maven.resources.plugin.version>
 		<maven.clean.plugin.version>2.5</maven.clean.plugin.version>
-		<maven.vertx.plugin.version>2.0.7-final</maven.vertx.plugin.version>
+		<maven.vertx.plugin.version>2.0.8-final</maven.vertx.plugin.version>
 		<maven.surefire.plugin.version>2.14</maven.surefire.plugin.version>
 		<maven.failsafe.plugin.version>2.14</maven.failsafe.plugin.version>
 		<maven.surefire.report.plugin.version>2.14</maven.surefire.report.plugin.version>

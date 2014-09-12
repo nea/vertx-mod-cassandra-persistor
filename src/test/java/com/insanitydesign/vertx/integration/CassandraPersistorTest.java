@@ -64,6 +64,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		config.putString("compression", "SNAPPY");
 		config.putString("retry", "fallthrough");
 		config.putObject("reconnection", new JsonObject().putString("policy", "constant").putNumber("delay", 1000));
+		config.putNumber("prepStmtCacheSize", 1);
 
 		//
 		container.logger().info("[Cassandra Persistor Test] Starting test of module " + System.getProperty("vertx.modulename"));
@@ -100,10 +101,11 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertThat(reply.body(), instanceOf(JsonArray.class));
 
 				} catch(Exception e) {
-				}
+					e.printStackTrace();
 
-				//
-				testComplete();
+				} finally {
+					testComplete();
+				}
 			}
 		});
 	}
@@ -132,10 +134,11 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertEquals("ok", reply.body().getString("status"));
 
 				} catch(Exception e) {
-				}
+					e.printStackTrace();
 
-				//
-				testComplete();
+				} finally {
+					testComplete();
+				}
 			}
 		});
 	}
@@ -164,14 +167,15 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertEquals("error", reply.body().getString("status"));
 
 				} catch(Exception e) {
-				}
+					e.printStackTrace();
 
-				//
-				testComplete();
+				} finally {
+					testComplete();
+				}
 			}
 		});
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -194,7 +198,7 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply);
 					assertNotNull(reply.body());
 					assertEquals("ok", reply.body().getString("status"));
-					
+
 					//
 					JsonObject select = new JsonObject();
 					select.putString("action", "raw");
@@ -213,19 +217,21 @@ public class CassandraPersistorTest extends TestVerticle {
 								assertNotNull(reply.body());
 
 							} catch(Exception e) {
+								e.printStackTrace();
+
+							} finally {
+								testComplete();
 							}
-							
-							//
-							testComplete();
 						}
 					});
 
 				} catch(Exception e) {
-				}				
+					e.printStackTrace();
+				}
 			}
 		});
 	}
-		
+
 	/**
 	 * 
 	 */
@@ -235,7 +241,8 @@ public class CassandraPersistorTest extends TestVerticle {
 		JsonObject insert = new JsonObject();
 		insert.putString("action", "raw");
 		String data = "Testing";
-		String query = "INSERT INTO vertxpersistor.fulltable (id, key, value, data) VALUES(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, 'Unit', 'Test', 0x" + DatatypeConverter.printHexBinary(data.getBytes()) + ")";
+		String query = "INSERT INTO vertxpersistor.fulltable (id, key, value, data) VALUES(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, 'Unit', 'Test', 0x"
+				+ DatatypeConverter.printHexBinary(data.getBytes()) + ")";
 		insert.putString("statement", query);
 
 		//
@@ -250,7 +257,7 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply);
 					assertNotNull(reply.body());
 					assertEquals("ok", reply.body().getString("status"));
-					
+
 					//
 					JsonObject select = new JsonObject();
 					select.putString("action", "raw");
@@ -270,26 +277,28 @@ public class CassandraPersistorTest extends TestVerticle {
 								assertEquals(1, reply.body().size());
 								assertThat(reply.body().get(0), instanceOf(JsonObject.class));
 								//
-								JsonObject result = (JsonObject)reply.body().get(0);
+								JsonObject result = (JsonObject) reply.body().get(0);
 								assertEquals("Unit", result.getString("key"));
 								assertEquals("Test", result.getString("value"));
 								ByteBuffer data = ByteBuffer.wrap(result.getBinary("data"));
-								assertEquals("Testing", new String(data.array()));
+								assertEquals("Testing", new String(data.array(), "UTF-8"));
 
 							} catch(Exception e) {
+								e.printStackTrace();
+
+							} finally {
+								testComplete();
 							}
-							
-							//
-							testComplete();
 						}
 					});
 
 				} catch(Exception e) {
+					e.printStackTrace();
 				}
 			}
 		});
 	}
-	
+
 	/**
 	 * 
 	 */
@@ -315,42 +324,40 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply);
 					assertNotNull(reply.body());
 					assertEquals("ok", reply.body().getString("status"));
-					
+
 					//
 					JsonObject select = new JsonObject();
 					select.putString("action", "raw");
-					select.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id IN(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, bbbbbbbb-2e54-4715-9f00-91dcbea6cf50)");
+					select.putString("statement",
+							"SELECT * FROM vertxpersistor.fulltable WHERE id IN(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, bbbbbbbb-2e54-4715-9f00-91dcbea6cf50)");
 
 					//
 					vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
 						@Override
 						public void handle(Message<JsonArray> reply) {
 							//
-							try {
-								container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+							container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
 
-								// Tests
-								assertNotNull(reply);
-								assertNotNull(reply.body());
-								assertEquals(2, reply.body().size());								
+							// Tests
+							assertNotNull(reply);
+							assertNotNull(reply.body());
+							assertEquals(2, reply.body().size());
+							//
+							for(Object result : reply.body()) {
+								assertThat(result, instanceOf(JsonObject.class));
 								//
-								for(Object result : reply.body()) {
-									assertThat(result, instanceOf(JsonObject.class));
-									//
-									JsonObject resultRow = (JsonObject)result;
-									assertTrue(resultRow.getString("key").startsWith("Unit"));
-									assertTrue(resultRow.getString("value").startsWith("Test"));
-								}
-
-							} catch(Exception e) {
+								JsonObject resultRow = (JsonObject) result;
+								assertTrue(resultRow.getString("key").startsWith("Unit"));
+								assertTrue(resultRow.getString("value").startsWith("Test"));
 							}
-							
+
 							//
 							testComplete();
 						}
 					});
 
 				} catch(Exception e) {
+					e.printStackTrace();
 				}
 			}
 		});
@@ -363,7 +370,7 @@ public class CassandraPersistorTest extends TestVerticle {
 	public void testPreparedInsert() {
 		//
 		Format format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-		
+
 		//
 		JsonObject insert = new JsonObject();
 		insert.putString("action", "prepared");
@@ -386,7 +393,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		JsonArray values = new JsonArray();
 		values.addArray(values1);
 		values.addArray(values2);
-		//		
+		//
 		insert.putArray("values", values);
 
 		//
@@ -401,48 +408,44 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply);
 					assertNotNull(reply.body());
 					assertEquals("ok", reply.body().getString("status"));
-					
+
 					//
 					JsonObject select = new JsonObject();
 					select.putString("action", "raw");
-					select.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id IN(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, bbbbbbbb-2e54-4715-9f00-91dcbea6cf50)");
+					select.putString("statement",
+							"SELECT * FROM vertxpersistor.fulltable WHERE id IN(aaaaaaaa-2e54-4715-9f00-91dcbea6cf50, bbbbbbbb-2e54-4715-9f00-91dcbea6cf50)");
 
 					//
 					vertx.eventBus().send("vertx.cassandra.persistor", select, new Handler<Message<JsonArray>>() {
 						@Override
 						public void handle(Message<JsonArray> reply) {
 							//
-							try {
-								container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+							container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
 
-								// Tests
-								assertNotNull(reply);
-								assertNotNull(reply.body());
-								assertEquals(2, reply.body().size());								
-								//
-								for(Object result : reply.body()) {
-									assertThat(result, instanceOf(JsonObject.class));
-									//
-									JsonObject resultRow = (JsonObject)result;
-									assertTrue(resultRow.getString("key").startsWith("Unit"));
-									assertTrue(resultRow.getString("value").startsWith("Test"));
-								}
-
-							} catch(Exception e) {
-							}
-							
+							// Tests
+							assertNotNull(reply);
+							assertNotNull(reply.body());
+							assertEquals(2, reply.body().size());
 							//
+							for(Object result : reply.body()) {
+								assertThat(result, instanceOf(JsonObject.class));
+								//
+								JsonObject resultRow = (JsonObject) result;
+								assertTrue(resultRow.getString("key").startsWith("Unit"));
+								assertTrue(resultRow.getString("value").startsWith("Test"));
+							}
+
 							testComplete();
 						}
 					});
 
 				} catch(Exception e) {
+					e.printStackTrace();
 				}
 			}
 		});
 	}
-	
-	
+
 	/**
 	 * 
 	 */
@@ -460,7 +463,7 @@ public class CassandraPersistorTest extends TestVerticle {
 		JsonArray values = new JsonArray();
 		values.addArray(values1);
 		values.addArray(values2);
-		//		
+		//
 		insert.putArray("values", values);
 
 		//
@@ -475,69 +478,81 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply);
 					assertNotNull(reply.body());
 					assertThat(reply.body(), instanceOf(JsonArray.class));
-					
-					//
+
 					testComplete();
 
 				} catch(Exception e) {
+					e.printStackTrace();
+
+				} finally {
+
 				}
 			}
 		});
 	}
 
-    @Test
-    public void testPrepareSingleStatement() {
-        JsonObject prepare = new JsonObject();
-        prepare.putString("action", "prepare");
-        prepare.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
+	/**
+	 * 
+	 */
+	@Test
+	public void testPrepareSingleStatement() {
+		JsonObject prepare = new JsonObject();
+		prepare.putString("action", "prepare");
+		prepare.putString("statement", "SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
 
-        vertx.eventBus().send("vertx.cassandra.persistor", prepare, new Handler<Message<JsonObject>>() {
-            @Override
-            public void handle(Message<JsonObject> reply) {
-                //
-                try {
-                    container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+		vertx.eventBus().send("vertx.cassandra.persistor", prepare, new Handler<Message<JsonObject>>() {
+			@Override
+			public void handle(Message<JsonObject> reply) {
+				//
+				try {
+					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
 
-                    // Tests
-                    assertNotNull(reply);
-                    assertNotNull(reply.body());
-                    assertEquals("ok", reply.body().getString("status"));
+					// Tests
+					assertNotNull(reply);
+					assertNotNull(reply.body());
+					assertEquals("ok", reply.body().getString("status"));
 
-                    //
-                    testComplete();
+				} catch(Exception e) {
+					e.printStackTrace();
 
-                } catch(Exception e) {
-                }
-            }
-        });
-    }
+				} finally {
+					testComplete();
+				}
+			}
+		});
+	}
 
-    @Test
-    public void testPrepareMultipleStatements() {
-        JsonObject prepare = new JsonObject();
-        prepare.putString("action", "prepare");
-        JsonArray statements = new JsonArray();
-        statements.addString("SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
-        prepare.putArray("statements", statements);
+	/**
+     * 
+     */
+	@Test
+	public void testPrepareMultipleStatements() {
+		JsonObject prepare = new JsonObject();
+		prepare.putString("action", "prepare");
+		JsonArray statements = new JsonArray();
+		statements.addString("SELECT * FROM vertxpersistor.emptytable WHERE id = ?");
+		statements.addString("SELECT * FROM vertxpersistor.fulltable WHERE id = ?");
+		prepare.putArray("statements", statements);
 
-        vertx.eventBus().send("vertx.cassandra.persistor", prepare, new Handler<Message<JsonObject>>() {
-            @Override
-            public void handle(Message<JsonObject> reply) {
-                //
-                try {
-                    container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
+		vertx.eventBus().send("vertx.cassandra.persistor", prepare, new Handler<Message<JsonObject>>() {
+			@Override
+			public void handle(Message<JsonObject> reply) {
+				//
+				try {
+					container.logger().info("[" + getClass().getName() + "] Reply Body: " + reply.body());
 
-                    // Tests
-                    assertNotNull(reply);
-                    assertNotNull(reply.body());
-                    assertEquals("ok", reply.body().getString("status"));
+					// Tests
+					assertNotNull(reply);
+					assertNotNull(reply.body());
+					assertEquals("ok", reply.body().getString("status"));
 
-                    //
-                    testComplete();
+				} catch(Exception e) {
+					e.printStackTrace();
 
-                } catch(Exception e) {
-                }
-            }
-        });
-    }
+				} finally {
+					testComplete();
+				}
+			}
+		});
+	}
 }

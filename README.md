@@ -1,5 +1,5 @@
 # Vert.x Cassandra Persistor [![Build Status](https://travis-ci.org/nea/vertx-mod-cassandra-persistor.svg?branch=master)](https://travis-ci.org/nea/vertx-mod-cassandra-persistor)
-This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.0][3] (*defaults and characteristics from the driver are implicitly used*).
+This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.1][3] (*defaults and characteristics from the driver are implicitly used*).
 
 It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for highest performance but straight-forward integration with Cassandra. 
 
@@ -9,16 +9,12 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.3.5
+	* Changed prepared statement configuration, caching and handling
 * 0.3.4
-	* Updated Vert.x and Cassandra Driver version
+	* Updated Vert.x (2.1.2) and Cassandra Driver (2.1.0) version
 * 0.3.3 (*thanks to [andyjduncan](https://github.com/andyjduncan)*)
     * Added caching of prepared statements and prepare action
-* 0.3.2
-    * Fixed/Added string date handling for prepared statements
-* 0.3.1
-    * Fixed CQL3 Blob data ByteBuffer handling
-* 0.3.0
-    * Added additional configuration options (e.g. compression)
 
 For a full version history go [here][5].
 
@@ -31,7 +27,7 @@ The module is available through the central Maven Repository
     <dependency>
         <groupId>com.insanitydesign</groupId>
         <artifactId>vertx-mod-cassandra-persistor</artifactId>
-        <version>0.3.4</version>
+        <version>0.3.5</version>
     </dependency>
 
 ## Configuration
@@ -55,7 +51,8 @@ The Vert.x Cassandra Persistor takes the following configuration
         },
         "ssl": <boolean>,
         "fetchSize": <int>,
-        "dateFormat": <string>
+        "dateFormat": <string>,
+        "prepStmtCacheSize": <int>
     }
 
 An exemplary configuration could look like
@@ -79,6 +76,7 @@ An exemplary configuration could look like
 * `ssl` *optional* Connect via SSL or not. Defaults to not.
 * `fetchSize` *optional* The default fetch size for *SELECT* queries. Defaults to 5000.
 * `dateFormat` *optional* The default Date pattern used to convert string dates to `Date` instances. Defaults to `dd-MM-yyyy HH:mm:ss`.
+* `prepStmtCacheSize` *optional* The default prepared statement cache size used to store and manage prepared statements. Defaults to `Integer.MAX_VALUE`
 
 ## Operations
 
@@ -87,7 +85,7 @@ An exemplary configuration could look like
 
     {
         "action": "raw",
-        "statement": <cql3Statement> | "statements": [<cql3BatchStatements>]
+        "statement": <cql3Statement> | "statements": [<cql3BatchStatements>, ...]
     }
     
 An example could look like
@@ -124,7 +122,7 @@ The `raw` action returns a `JsonArray` of `JsonObject`s in the format `columnNam
     {
         "action": "prepared",
         "statement": <cql3Statement>,
-        "values": {[<valueList>]}
+        "values": [<valuesArray>]
     }
     
 An example could look like
@@ -133,13 +131,14 @@ An example could look like
         "action": "prepared",
         "statement": "INSERT INTO superkeyspace.tablewithinfos (id, key, value) VALUES(?, ? ,?)"
         "values": [
-            [3a708930-c005-11e3-8a33-0800200c9a66, "Key A", "Value A"],
-            [3a708931-c005-11e3-8a33-0800200c9a66, "Key B", "Value B"]
+            ["3a708930-c005-11e3-8a33-0800200c9a66", "Key A", "Value A"],
+            ["3a708931-c005-11e3-8a33-0800200c9a66", "Key B", "Value B"]
         ]
     }
     
 #### Fields
 `statement` A Cassandra Query Language version 3 (CQL3) compliant prepared statement query that is channeled through to the driver and Cassandra. Only *SELECT*, *UPDATE*, *INSERT* and *DELETE* are allowed.  
+`statements` A JsonArray of Cassandra Query Language version 3 (CQL3) compliant prepared statement query that is channeled through to the driver and Cassandra. Only *SELECT*, *UPDATE*, *INSERT* and *DELETE* are allowed.
 `values` A JsonArray of JsonArrays with the values. Every value list will create its bindings and be executed in a batched statement (if not a *SELECT* query).
 
 #### Returns
@@ -173,11 +172,11 @@ or
 where `statement` is preferred over `statements`.
 
 #### Fields
-`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is channeled through to the driver and Cassandra.  
-`statements` A JsonArray of Cassandra Query Language version 3 (CQL3) compliant queries that are channeled through to the driver and Cassandra.
+`statement` A Cassandra Query Language version 3 (CQL3) compliant query that is added to the prepared statement cache for later use.  
+`statements` A JsonArray of Cassandra Query Language version 3 (CQL3) compliant queries, which are added to the prepared statement cache for later use.
 
 #### Returns
-Response as detailed in General Responses
+Response as detailed in General Responses.
 
 ## General Responses
 In case no resultset is given to return to the sender or in case of errors a general status in JSON will be returned. It looks like
