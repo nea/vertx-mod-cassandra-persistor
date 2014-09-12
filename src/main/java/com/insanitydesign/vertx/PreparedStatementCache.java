@@ -202,7 +202,7 @@ public class PreparedStatementCache {
 
 		/**
 		 * 
-		 * @param preparedStament
+		 * @param preparedStatement
 		 */
 		public CassandraPreparedStatement(PreparedStatement preparedStatement) {
 			this.preparedStatement = preparedStatement;
