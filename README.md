@@ -10,7 +10,7 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 
 ## Latest Versions
 * 0.3.5
-	* Changed prepared statement configuration, caching and handling
+	* Added prepared statement configuration, changed caching and handling
 * 0.3.4
 	* Updated Vert.x (2.1.2) and Cassandra Driver (2.1.0) version
 * 0.3.3 (*thanks to [andyjduncan](https://github.com/andyjduncan)*)
