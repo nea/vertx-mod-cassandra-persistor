@@ -479,13 +479,11 @@ public class CassandraPersistorTest extends TestVerticle {
 					assertNotNull(reply.body());
 					assertThat(reply.body(), instanceOf(JsonArray.class));
 
-					testComplete();
-
 				} catch(Exception e) {
 					e.printStackTrace();
 
 				} finally {
-
+					testComplete();
 				}
 			}
 		});
