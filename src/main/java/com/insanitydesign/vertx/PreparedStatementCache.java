@@ -40,7 +40,8 @@ public class PreparedStatementCache {
 	 *            The logger to use for debugging
 	 */
 	public PreparedStatementCache(int prepStmtCacheSize, Logger logger) {
-		this.prepStmtCacheSize = prepStmtCacheSize;
+		//Cache must be at least size == 1
+		this.prepStmtCacheSize = (prepStmtCacheSize < 1 ? 1 : prepStmtCacheSize);
 		this.logger = logger;
 	}
 
