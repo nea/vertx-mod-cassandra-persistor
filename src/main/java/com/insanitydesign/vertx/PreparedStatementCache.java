@@ -36,12 +36,15 @@ public class PreparedStatementCache {
 	 * 
 	 * @param prepStmtCacheSize
 	 *            The size of this cache
+	 * @param session
+	 *            The Cassandra session to create prepared statements from
 	 * @param logger
 	 *            The logger to use for debugging
 	 */
-	public PreparedStatementCache(int prepStmtCacheSize, Logger logger) {
+	public PreparedStatementCache(int prepStmtCacheSize, Session session, Logger logger) {
 		// Cache must be at least size == 1
 		this.prepStmtCacheSize = (prepStmtCacheSize < 1 ? 1 : prepStmtCacheSize);
+		this.session = session;
 		this.logger = logger;
 	}
 
@@ -79,13 +82,13 @@ public class PreparedStatementCache {
 			// Find least used and remove
 			for(Entry<String, CassandraPreparedStatement> entry : this.cachedStatements.entrySet()) {
 				if(entry.getValue().getUsage() <= minUsage) {
-					//Remove older before younger statements
+					// Remove older before younger statements
 					if(get(statementToRemove) != null && entry.getValue().getAge() < get(statementToRemove).getAge()) {
 						continue;
 					}
 					//
 					minUsage = entry.getValue().getUsage();
-					statementToRemove = entry.getKey();					
+					statementToRemove = entry.getKey();
 				}
 			}
 			//
@@ -194,7 +197,7 @@ public class PreparedStatementCache {
 	public void setPrepStmtCacheSize(int prepStmtCacheSize) {
 		this.prepStmtCacheSize = prepStmtCacheSize;
 	}
-	
+
 	/**
 	 * 
 	 * @return

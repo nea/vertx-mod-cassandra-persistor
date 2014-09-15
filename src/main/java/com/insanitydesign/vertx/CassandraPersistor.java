@@ -97,8 +97,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		setRetryPolicy(getOptionalStringConfig("retry", "default"));
 		setReconnectionPolicy(getOptionalObjectConfig("reconnection", new JsonObject("{}")));
 		getQueryOptions().setFetchSize(getOptionalIntConfig("fetchSize", QueryOptions.DEFAULT_FETCH_SIZE));
-		setDateFormatter(new SimpleDateFormat(getOptionalStringConfig("dateFormat", "dd-MM-yyyy HH:mm:ss")));
-		setPreparedStatementCache(new PreparedStatementCache(getOptionalIntConfig("prepStmtCacheSize", Integer.MAX_VALUE), container.logger()));
+		setDateFormatter(new SimpleDateFormat(getOptionalStringConfig("dateFormat", "dd-MM-yyyy HH:mm:ss")));		
 
 		//
 		Cluster.Builder builder = Cluster.builder();
@@ -144,7 +143,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 				logger.info("[Cassandra Persistor] DC: " + host.getDatacenter() + " - Host: " + host.getAddress() + " - Rack: " + host.getRack());
 			}
 
+			//Get Session and add it to Cache
 			setSession(getCluster().connect());
+			setPreparedStatementCache(new PreparedStatementCache(getOptionalIntConfig("prepStmtCacheSize", Integer.MAX_VALUE), getSession(), container.logger()));
 
 		} catch(Exception e) {
 			logger.error("[Cassandra Persistor] Cannot connect/get session from Cassandra!", e);
@@ -613,7 +614,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		// Add the newest sessions always as source for prepared statements to
 		// the cache
-		getPreparedStatementCache().setSession(session);
+		if(getPreparedStatementCache() != null) {
+			getPreparedStatementCache().setSession(session);	
+		}
 	}
 
 	public String getAddress() {

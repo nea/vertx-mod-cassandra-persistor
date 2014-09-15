@@ -45,8 +45,7 @@ public class PreparedStatementCacheTest {
 	@Test
 	public void testCache() {
 		//Create cache to test on
-		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, logger);
-		preparedStatementCache.setSession(session);
+		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, session, logger);
 		
 		//Test
 		String statement = "SELECT * FROM test.table";
@@ -64,8 +63,7 @@ public class PreparedStatementCacheTest {
 	@Test
 	public void testIncrementCache() {
 		//Create cache to test on
-		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, logger);
-		preparedStatementCache.setSession(session);
+		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, session, logger);
 		
 		//Test
 		String statement = "SELECT * FROM test.table";
@@ -83,8 +81,7 @@ public class PreparedStatementCacheTest {
 	@Test
 	public void testMultiIncrementCache() {
 		//Create cache to test on
-		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, logger);
-		preparedStatementCache.setSession(session);
+		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, session, logger);
 		
 		//Test
 		String statement = "SELECT * FROM test.table";
@@ -105,8 +102,7 @@ public class PreparedStatementCacheTest {
 	@Test
 	public void testCacheSize() {
 		//Create cache to test on
-		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, logger);
-		preparedStatementCache.setSession(session);
+		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(1, session, logger);
 		
 		//Test
 		String statement = "SELECT * FROM test.table";
@@ -136,8 +132,7 @@ public class PreparedStatementCacheTest {
 	public void testBiggerCacheSize() {
 		//Create cache to test on
 		int cacheSize = 100;
-		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(cacheSize, logger);
-		preparedStatementCache.setSession(session);
+		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(cacheSize, session, logger);
 		
 		//Test
 		String statement = "SELECT * FROM test.table";
@@ -156,8 +151,7 @@ public class PreparedStatementCacheTest {
 	public void testStatementReplacement() {
 		//Create cache to test on
 		int cacheSize = 100;
-		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(cacheSize, logger);
-		preparedStatementCache.setSession(session);
+		PreparedStatementCache preparedStatementCache = new PreparedStatementCache(cacheSize, session, logger);
 		
 		//Test
 		String statement = "SELECT * FROM test.table";
