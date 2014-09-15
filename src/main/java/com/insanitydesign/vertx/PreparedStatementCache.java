@@ -40,7 +40,7 @@ public class PreparedStatementCache {
 	 *            The logger to use for debugging
 	 */
 	public PreparedStatementCache(int prepStmtCacheSize, Logger logger) {
-		//Cache must be at least size == 1
+		// Cache must be at least size == 1
 		this.prepStmtCacheSize = (prepStmtCacheSize < 1 ? 1 : prepStmtCacheSize);
 		this.logger = logger;
 	}
@@ -78,9 +78,14 @@ public class PreparedStatementCache {
 			int minUsage = Integer.MAX_VALUE;
 			// Find least used and remove
 			for(Entry<String, CassandraPreparedStatement> entry : this.cachedStatements.entrySet()) {
-				if(entry.getValue().getUsage() < minUsage) {
+				if(entry.getValue().getUsage() <= minUsage) {
+					//Remove older before younger statements
+					if(get(statementToRemove) != null && entry.getValue().getAge() < get(statementToRemove).getAge()) {
+						continue;
+					}
+					//
 					minUsage = entry.getValue().getUsage();
-					statementToRemove = entry.getKey();
+					statementToRemove = entry.getKey();					
 				}
 			}
 			//
@@ -189,6 +194,14 @@ public class PreparedStatementCache {
 	public void setPrepStmtCacheSize(int prepStmtCacheSize) {
 		this.prepStmtCacheSize = prepStmtCacheSize;
 	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	protected Map<String, CassandraPreparedStatement> getCachedStatements() {
+		return cachedStatements;
+	}
 
 	/**
 	 * Internal prepared statement model with counter for improved overflow handling.
@@ -200,6 +213,9 @@ public class PreparedStatementCache {
 
 		/** The backed prepared statement */
 		private PreparedStatement preparedStatement;
+
+		/** */
+		private long lastUsed = System.currentTimeMillis();
 
 		/**
 		 * 
@@ -226,6 +242,8 @@ public class PreparedStatementCache {
 		 * @return
 		 */
 		public int use() {
+			//
+			this.lastUsed = System.currentTimeMillis();
 			// Check for max and do not let it overflow to MIN_VALUE. If it is
 			// used that much, it deserves to stay at max :)
 			if(counter.get() == Integer.MAX_VALUE) {
@@ -238,10 +256,26 @@ public class PreparedStatementCache {
 
 		/**
 		 * 
-		 * @return
+		 * @return The amount of use calls from this prepared statement
 		 */
 		public int getUsage() {
 			return counter.get();
+		}
+
+		/**
+		 * 
+		 * @return The age of this prepared statement from last used till now
+		 */
+		public long getAge() {
+			return System.currentTimeMillis() - this.lastUsed;
+		}
+
+		/**
+		 * 
+		 * @return
+		 */
+		public long getLastUsed() {
+			return lastUsed;
 		}
 
 		/**

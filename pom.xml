@@ -6,10 +6,10 @@
 	<groupId>com.insanitydesign</groupId>
 	<artifactId>vertx-mod-cassandra-persistor</artifactId>
 	<packaging>jar</packaging>
-	<version>0.3.5</version>
+	<version>0.3.6</version>
 	<name>Vert.x Cassandra Persistor Module</name>
 	<url>https://github.com/nea/vertx-mod-cassandra-persistor</url>
-	<description>This very simple Vert.x module allows to store and retrieve data from a Cassandra instance or cluster. It uses the DataStax Java Driver 2.0.</description>
+	<description>This very simple Vert.x module allows to store and retrieve data from a Cassandra instance or cluster. It uses the DataStax Java Driver 2.1.</description>
 
 	<licenses>
 		<license>
@@ -96,6 +96,12 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.9.5</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -260,7 +266,7 @@
 						</property>
 					</systemProperties>
 					<includes>
-						<include>**/integration/**</include>
+						<include>**/*Test*.java</include>
 					</includes>
 				</configuration>
 				<executions>
