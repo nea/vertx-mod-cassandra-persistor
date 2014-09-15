@@ -43,7 +43,7 @@ public class PreparedStatementCache {
 	 */
 	public PreparedStatementCache(int prepStmtCacheSize, Session session, Logger logger) {
 		// Cache must be at least size == 1
-		this.prepStmtCacheSize = (prepStmtCacheSize < 1 ? 1 : prepStmtCacheSize);
+		this.prepStmtCacheSize = Math.max(prepStmtCacheSize, 1);
 		this.session = session;
 		this.logger = logger;
 	}
