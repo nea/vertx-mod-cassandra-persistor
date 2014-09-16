@@ -2,8 +2,11 @@ package com.insanitydesign.vertx;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.vertx.java.busmods.BusModBase;
 import org.vertx.java.core.Handler;
@@ -66,9 +69,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	/** The query options (e.g. fetch size) for this connection */
 	private QueryOptions queryOptions = new QueryOptions();
 
-	/**
-	 * The formatter (default pattern: dd-MM-yyyy HH:mm:ss) used to convert String dates to Date instances
-	 */
+	/** The formatter (default pattern: dd-MM-yyyy HH:mm:ss) used to convert String dates to Date instances */
 	private SimpleDateFormat dateFormatter;
 
 	/** Only supporting Cassandra > 2 */
@@ -153,6 +154,8 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		//
 		eb.registerHandler(getAddress(), this);
+		//
+		container.deployWorkerVerticle(BatchActionsProcessor.class.getName(), container.config());
 
 		//
 		logger.info("[Cassandra Persistor] ...booted!");
@@ -175,7 +178,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		//
 		try {
 			switch(action) {
-				// Channel the raw statements
+			// Channel the raw statements
 				case "raw":
 					raw(message);
 					break;
