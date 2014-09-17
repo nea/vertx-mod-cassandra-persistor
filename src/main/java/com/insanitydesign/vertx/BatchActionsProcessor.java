@@ -145,11 +145,9 @@ public class BatchActionsProcessor extends BusModBase implements Handler<Message
 			if(this.actionsAmount.decrementAndGet() <= 0) {
 				//If no results where received, something most likely went wrong
 				if(this.retVals.toList().isEmpty()) {
-				    message.reply(new JsonObject().putString("status", "error").putString("message", "[BatchRequest Handler] Received no results!"));
-					
-				} else {
-					message.reply(this.retVals);	
+					this.retVals.add(new JsonObject().putString("status", "error").putString("message", "[BatchRequest Handler] Received no results!"));
 				}
+				message.reply(this.retVals);
 			}
 		}
 
