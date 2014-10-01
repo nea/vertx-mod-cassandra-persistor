@@ -158,6 +158,7 @@ public class PreparedStatementCacheTest {
 		for(int i = 0; i < cacheSize; i++) {
 			preparedStatementCache.addAndGet(statement + i);
 		}
+
 		CassandraPreparedStatement prepStmt = preparedStatementCache.get(statement + (cacheSize - 1));
 		assertNotNull(prepStmt);
 		assertEquals(prepStmt.getUsage(), 1);
@@ -166,7 +167,7 @@ public class PreparedStatementCacheTest {
 		for(int i = 0; i < cacheSize - 1; i++) {
 			preparedStatementCache.addAndGet(statement + i);
 		}
-		
+
 		//
 		for(int i = 0; i < cacheSize - 1; i++) {
 			prepStmt = preparedStatementCache.get(statement + i);
@@ -176,7 +177,6 @@ public class PreparedStatementCacheTest {
 		
 		//Adding original one replacing the least used
 		preparedStatementCache.addAndGet(statement);
-		
 		//
 		prepStmt = preparedStatementCache.get(statement + (cacheSize - 1));
 		assertNull(prepStmt);

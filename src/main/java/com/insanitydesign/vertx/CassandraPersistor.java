@@ -15,7 +15,6 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.datastax.driver.core.BatchStatement;
-import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.Host;
@@ -179,7 +178,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		//
 		try {
 			switch(action) {
-			// Channel the raw statements
+				// Channel the raw statements
 				case "raw":
 					raw(message);
 					break;
@@ -226,10 +225,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			//
 			JsonArray valueList = values.get(i);
 			//
-			BoundStatement boundStmt = preparedStmt.bind();
-			query.add(boundStmt.bind(parseArray(valueList.toArray())));
+			query.add(preparedStmt.bind(parseArray(valueList.toArray())));
 		}
-
+				
 		//
 		if(statement.trim().toLowerCase().startsWith("select")) {
 			//

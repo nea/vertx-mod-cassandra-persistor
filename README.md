@@ -9,12 +9,12 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.4.1
+	* Disabled multi-threaded flag from mod.json
 * 0.4.0
 	* Added batched actions handler, processing an array of actions
 * 0.3.6
 	* Added additional age handling on cached statements for optimized overflow replacement
-* 0.3.5
-	* Added prepared statement configuration, changed caching and handling
 
 For a full version history go [here][5].
 
@@ -27,7 +27,7 @@ The module is available through the central Maven Repository
     <dependency>
         <groupId>com.insanitydesign</groupId>
         <artifactId>vertx-mod-cassandra-persistor</artifactId>
-        <version>0.4.0</version>
+        <version>0.4.1</version>
     </dependency>
 
 ## Configuration

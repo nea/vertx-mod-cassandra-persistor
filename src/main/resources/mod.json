@@ -2,7 +2,7 @@
 	//Configuration
   	"main":"com.insanitydesign.vertx.CassandraPersistor",
   	"worker": true,
-  	"multi-threaded": true,
+  	"multi-threaded": false,
 
   	//Information
   	"description":"Store and retrieve data from Cassandra",
