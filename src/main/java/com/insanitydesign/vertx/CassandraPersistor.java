@@ -114,8 +114,9 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			// Reconnection
 			builder = builder.withReconnectionPolicy(getReconnectionPolicy());
 			// Credentials - don't store in class but only configure
-			if(this.config.getString("credentials") != null) {
-				builder = builder.withCredentials(this.config.getString("username"), this.config.getString("password"));
+			if(this.config.getObject("credentials") != null) {
+				JsonObject credentials = this.config.getObject("credentials");
+				builder = builder.withCredentials(credentials.getString("username"), credentials.getString("password"));
 			}
 			// SSL?
 			if(getOptionalBooleanConfig("ssl", false)) {
