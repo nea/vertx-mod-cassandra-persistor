@@ -57,8 +57,6 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 	private JsonArray hosts;
 	/** The configured port or default */
 	private int port;
-	/** The configured keyspace or default */
-	private String keyspace;
 	/** The compression to use for Cassandra communication */
 	private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
 	/** How to handle issues and retry based on what policy */
@@ -92,7 +90,6 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 		setAddress(getOptionalStringConfig("address", "vertx.cassandra.persistor"));
 		setHosts(getOptionalArrayConfig("hosts", new JsonArray("[\"127.0.0.1\"]")));
 		setPort(getOptionalIntConfig("port", 9042));
-		setKeyspace(getOptionalStringConfig("keyspace", "vertxpersistor"));
 		setCompression(getOptionalStringConfig("compression", "NONE"));
 		setRetryPolicy(getOptionalStringConfig("retry", "default"));
 		setReconnectionPolicy(getOptionalObjectConfig("reconnection", new JsonObject("{}")));
@@ -145,7 +142,7 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 			}
 
 			//Get Session and add it to Cache
-			setSession(getCluster().connect());
+			setSession(connect(config.getString("keyspace")));
 			setPreparedStatementCache(new PreparedStatementCache(getOptionalIntConfig("prepStmtCacheSize", Integer.MAX_VALUE), getSession(), container.logger()));
 
 		} catch(Exception e) {
@@ -160,6 +157,10 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 		//
 		logger.info("[Cassandra Persistor] ...booted!");
+	}
+
+	private Session connect(String keyspace) {
+		return null == keyspace ? getCluster().connect() : getCluster().connect(keyspace);
 	}
 
 	/**
@@ -635,14 +636,6 @@ public class CassandraPersistor extends BusModBase implements Handler<Message<Js
 
 	public void setHosts(JsonArray hosts) {
 		this.hosts = hosts;
-	}
-
-	public String getKeyspace() {
-		return keyspace;
-	}
-
-	public void setKeyspace(String keyspace) {
-		this.keyspace = keyspace;
 	}
 
 	public void setPort(int port) {
