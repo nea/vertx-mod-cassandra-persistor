@@ -1,5 +1,5 @@
 # Vert.x Cassandra Persistor [![Build Status](https://travis-ci.org/nea/vertx-mod-cassandra-persistor.svg?branch=master)](https://travis-ci.org/nea/vertx-mod-cassandra-persistor)
-This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.1][3] (*defaults and characteristics from the driver are implicitly used*).
+This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.1.6][3] (*defaults and characteristics from the driver are implicitly used*).
 
 It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for highest performance but straight-forward integration with Cassandra. 
 
@@ -9,12 +9,13 @@ It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for h
 * CQL3
 
 ## Latest Versions
+* 0.5.0
+    * Fixed credentials and keyspace configuration usage (thanks to [mismatch](https://github.com/mismatch))
+    * Updated DataStax Driver to 2.1.6 and Vertx to 2.1.5
 * 0.4.1
 	* Disabled multi-threaded flag from mod.json
 * 0.4.0
 	* Added batched actions handler, processing an array of actions
-* 0.3.6
-	* Added additional age handling on cached statements for optimized overflow replacement
 
 For a full version history go [here][5].
 
@@ -27,7 +28,7 @@ The module is available through the central Maven Repository
     <dependency>
         <groupId>com.insanitydesign</groupId>
         <artifactId>vertx-mod-cassandra-persistor</artifactId>
-        <version>0.4.1</version>
+        <version>0.5.0</version>
     </dependency>
 
 ## Configuration
@@ -240,7 +241,7 @@ or in case of errors
 
   [1]: http://vertx.io
   [2]: http://cassandra.apache.org/
-  [3]: http://www.datastax.com/documentation/developer/java-driver/2.0
+  [3]: http://www.datastax.com/documentation/developer/java-driver/2.1
   [4]: https://github.com/vert-x/mod-mongo-persistor
   [5]: https://github.com/nea/vertx-mod-cassandra-persistor/wiki/Version-History
   [6]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/Policies.html#defaultRetryPolicy()
