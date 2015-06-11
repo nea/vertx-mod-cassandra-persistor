@@ -1,4 +1,4 @@
-# Vert.x Cassandra Persistor [![Build Status](https://travis-ci.org/nea/vertx-mod-cassandra-persistor.svg?branch=master)](https://travis-ci.org/nea/vertx-mod-cassandra-persistor)
+# Vert.x Cassandra Persistor [![Build Status](https://travis-ci.org/nea/vertx-mod-cassandra-persistor.svg?branch=master)](https://travis-ci.org/nea/vertx-mod-cassandra-persistor) 
 This very simple [Vert.x][1] module allows to store and retrieve data from a [Cassandra][2] instance or cluster. It uses the [DataStax Java Driver 2.1.6][3] (*defaults and characteristics from the driver are implicitly used*).
 
 It is loosely based on the Vert.x [MongoDB persistor][4] and not optimized for highest performance but straight-forward integration with Cassandra. 
@@ -23,7 +23,7 @@ For a full version history go [here][5].
 This Persistor has only been developed and tested with Cassandra 2.x/CQL3. To use it you of course have to have a Cassandra instance running and accessible through the network, where this Module is running.
 
 ### Repository
-The module is available through the central Maven Repository
+The module is available through the central [Maven Repository](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.insanitydesign%22%20AND%20a%3A%22vertx-mod-cassandra-persistor%22)
 
     <dependency>
         <groupId>com.insanitydesign</groupId>
