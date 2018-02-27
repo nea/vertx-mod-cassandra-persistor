@@ -246,4 +246,4 @@ or in case of errors
   [5]: https://github.com/nea/vertx-mod-cassandra-persistor/wiki/Version-History
   [6]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/Policies.html#defaultRetryPolicy()
   [7]: http://www.datastax.com/drivers/java/2.0/com/datastax/driver/core/policies/Policies.html#defaultReconnectionPolicy()
-  [8]: http://www.insanitydesign.com/wp/
+  [8]: http://www.insanitydesign.com/
